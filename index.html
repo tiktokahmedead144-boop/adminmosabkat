@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المنصة | تحكم كامل</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap'); body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; }</style>
+</head>
+<body class="pb-20">
+
+    <nav class="bg-slate-900 text-white p-4 shadow-xl sticky top-0 z-50 border-b-4 border-blue-600">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-black"><i class="fas fa-tools ml-2"></i> لوحة تحكم المنصة</h1>
+            <button id="logout-btn" onclick="app.logout()" class="hidden bg-red-600 text-white px-4 py-1 rounded-lg font-bold text-xs">خروج</button>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        
+        <div id="login-view" class="max-w-md mx-auto bg-white p-10 rounded-[3rem] shadow-2xl mt-12 text-center border-t-8 border-slate-900">
+            <h2 class="text-3xl font-black mb-8">دخول المدير</h2>
+            <input type="email" id="adm-email" placeholder="الإيميل الإلكتروني" class="w-full border-2 p-4 rounded-2xl mb-4 outline-none focus:border-blue-600">
+            <input type="password" id="adm-pass" placeholder="كلمة المرور" class="w-full border-2 p-4 rounded-2xl mb-8 outline-none focus:border-blue-600">
+            <button onclick="app.login()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black shadow-lg">دخول</button>
+        </div>
+
+        <div id="panel-view" class="hidden space-y-8">
+            <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                <button onclick="admin.switchTab('settings')" class="tab-btn bg-slate-800 text-white px-8 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow-lg">الإعدادات العامة</button>
+                <button onclick="admin.switchTab('add')" class="tab-btn bg-white text-slate-500 px-8 py-3 rounded-2xl font-black text-sm shadow whitespace-nowrap">إضافة محتوى</button>
+                <button onclick="admin.switchTab('manage')" class="tab-btn bg-white text-slate-500 px-8 py-3 rounded-2xl font-black text-sm shadow whitespace-nowrap">إدارة الأسئلة</button>
+            </div>
+
+            <div id="tab-settings" class="adm-tab block bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                <h3 class="font-black text-xl mb-8 text-blue-700"><i class="fas fa-cog ml-2"></i> إعدادات المنصة والهوية</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <label class="block font-bold text-xs text-slate-400">اسم المنصة:</label><input id="set-site-name" class="w-full border p-3 rounded-xl bg-slate-50">
+                        <label class="block font-bold text-xs text-slate-400">العنوان الرئيسي:</label><input id="set-hero-title" class="w-full border p-3 rounded-xl bg-slate-50">
+                        <label class="block font-bold text-xs text-slate-400">الوصف الترحيبي:</label><input id="set-hero-desc" class="w-full border p-3 rounded-xl bg-slate-50">
+                        <label class="block font-bold text-xs text-red-600 font-black">كود دخول المشتركين (Access Code):</label><input id="set-access-code" class="w-full border p-4 rounded-xl bg-yellow-50 font-black text-center text-2xl tracking-widest">
+                    </div>
+                    <div class="space-y-4">
+                        <label class="block font-bold text-xs text-slate-400">رقم الواتساب:</label><input id="set-whatsapp" class="w-full border p-3 rounded-xl bg-slate-50">
+                        <label class="block font-bold text-xs text-slate-400">عنوان نافذة الدخول:</label><input id="set-sub-title" class="w-full border p-3 rounded-xl bg-slate-50">
+                        <label class="block font-bold text-xs text-slate-400">رسالة نافذة الدخول:</label><input id="set-sub-msg" class="w-full border p-3 rounded-xl bg-slate-50">
+                        <label class="block font-bold text-xs text-slate-400">نص الفوتر:</label><input id="set-footer-text" class="w-full border p-3 rounded-xl bg-slate-50">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 border-t pt-8">
+                    <div><label class="block font-bold text-xs">نص زر الزوار:</label><input id="set-btn-vis" class="w-full border p-3 rounded-xl"></div>
+                    <div><label class="block font-bold text-xs">نص زر المشتركين:</label><input id="set-btn-sub" class="w-full border p-3 rounded-xl"></div>
+                </div>
+
+                <div class="mt-8 bg-blue-50 p-6 rounded-3xl border-2 border-dashed border-blue-200">
+                    <h4 class="font-black text-blue-700 mb-4"><i class="fab fa-android ml-2"></i> ربط تطبيق الهاتف:</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input id="set-app-link" placeholder="رابط التحميل المباشر" class="w-full border p-3 rounded-xl bg-white">
+                        <input id="set-app-text" placeholder="النص الذي يظهر في البنر" class="w-full border p-3 rounded-xl bg-white">
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <label class="block font-bold text-xs text-slate-400 mb-1">تعليمات وتنبيهات الصفحة الرئيسية:</label>
+                    <textarea id="set-tutorial" class="w-full border p-3 rounded-xl h-24 bg-slate-50"></textarea>
+                </div>
+                <button onclick="admin.saveSettings()" class="w-full bg-blue-800 text-white py-5 rounded-2xl mt-10 font-black shadow-xl">حفظ التغييرات النهائية ✅</button>
+            </div>
+
+            <div id="tab-add" class="adm-tab hidden space-y-8">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border-r-8 border-emerald-500">
+                    <h4 class="font-black text-lg mb-6 text-emerald-800">أولاً: إنشاء اختبار جديد</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <select id="adm-mode" class="border p-3 rounded-xl font-bold"><option value="visitor">مجاني للجميع</option><option value="subscriber">مشتركين VIP</option></select>
+                        <select id="adm-major" class="border p-3 rounded-xl font-bold"><option value="Universal">عام</option><option value="لغة عربية">لغة عربية</option><option value="رياضيات">رياضيات</option><option value="علوم">علوم</option><option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option></select>
+                        <select id="adm-minor" class="border p-3 rounded-xl font-bold"><option value="تخصص">أسئلة التخصص</option><option value="تربوي">التربوي</option><option value="جدارات">جدارات</option><option value="IQ">IQ</option><option value="عربي عام">عربي عام</option><option value="معلومات عامة">معلومات عامة</option></select>
+                    </div>
+                    <div class="flex gap-2">
+                        <input id="new-quiz-name" placeholder="عنوان الاختبار (مثلاً: نحو شامل 1)" class="w-full border p-3 rounded-xl">
+                        <button onclick="admin.addQuiz()" class="bg-emerald-600 text-white px-10 rounded-xl font-black">إنشاء</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-3xl shadow-sm border-r-8 border-blue-600">
+                    <h4 class="font-black text-lg mb-6 text-blue-800">ثانياً: تعبئة الأسئلة</h4>
+                    <select id="adm-target-quiz" class="w-full border p-4 rounded-xl mb-6 font-black bg-blue-50"></select>
+                    
+                    <div class="flex gap-4 mb-6">
+                        <button onclick="admin.toggleAddMode('manual')" id="btn-manual" class="flex-1 py-3 bg-blue-700 text-white rounded-xl font-bold shadow-md">إضافة يدوية</button>
+                        <button onclick="admin.toggleAddMode('bulk')" id="btn-bulk" class="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold">استيراد JSON (جملة)</button>
+                    </div>
+
+                    <div id="add-manual" class="space-y-4">
+                        <textarea id="q-text" placeholder="نص السؤال..." class="w-full border p-3 rounded-xl h-24"></textarea>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input id="opt1" placeholder="خيار أ" class="border p-3 rounded-xl"><input id="opt2" placeholder="خيار ب" class="border p-3 rounded-xl">
+                            <input id="opt3" placeholder="خيار ج" class="border p-3 rounded-xl"><input id="opt4" placeholder="خيار د" class="border p-3 rounded-xl">
+                        </div>
+                        <input id="q-ans" placeholder="الإجابة الصحيحة (يجب أن تطابق أحد الخيارات تماماً)" class="w-full border bg-emerald-50 p-3 rounded-xl font-bold">
+                        <input id="q-hint" placeholder="تلميح مساعدة (اختياري)" class="w-full border p-3 rounded-xl">
+                        <button onclick="admin.addManualQ()" class="w-full bg-blue-700 text-white py-4 rounded-xl font-black shadow-lg">حفظ هذا السؤال</button>
+                    </div>
+
+                    <div id="add-bulk" class="hidden space-y-4">
+                        <textarea id="json-input" placeholder="الصق مصفوفة الأسئلة بصيغة JSON هنا..." class="w-full border p-4 rounded-xl h-48 bg-slate-900 text-green-400 font-mono text-xs" dir="ltr"></textarea>
+                        <button onclick="admin.processJSON()" class="w-full bg-purple-700 text-white py-4 rounded-xl font-black">بدء الاستيراد الذكي 🚀</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-3xl shadow-sm border-r-8 border-red-600">
+                    <h4 class="font-black text-lg mb-6 text-red-700">ثالثاً: إضافة ملفات PDF</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                         <select id="file-mode" class="border p-3 rounded-xl font-bold"><option value="visitor">للجميع</option><option value="subscriber">مشتركين</option></select>
+                         <select id="file-major" class="border p-3 rounded-xl font-bold"><option value="Universal">عام</option><option value="لغة عربية">لغة عربية</option></select>
+                         <select id="file-minor" class="border p-3 rounded-xl font-bold"><option value="تخصص">ملازم</option><option value="تربوي">تربوي</option></select>
+                    </div>
+                    <input id="file-name" placeholder="اسم الملف" class="w-full border p-3 rounded-xl mb-3">
+                    <input id="file-url" placeholder="رابط الملف المباشر" class="w-full border p-3 rounded-xl mb-6">
+                    <button onclick="admin.addFile()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black">حفظ الملف</button>
+                </div>
+            </div>
+
+            <div id="tab-manage" class="adm-tab hidden space-y-6">
+                <div class="bg-white p-8 rounded-3xl shadow-sm">
+                    <div class="flex justify-between items-center mb-8 border-b pb-6">
+                        <h3 class="font-black text-2xl">إدارة المحتوى والشجرة</h3>
+                        <div class="flex gap-2">
+                             <button onclick="admin.batchDelete()" id="batch-del-btn" class="hidden bg-red-600 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-md">حذف المختار</button>
+                             <button onclick="admin.nuke()" class="text-red-600 font-bold bg-red-50 px-6 py-2 rounded-xl border border-red-100 hover:bg-red-600 hover:text-white transition">مسح كل شيء!</button>
+                        </div>
+                    </div>
+                    <div id="admin-tree" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/80 hidden z-[200] flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-[2.5rem] w-full max-w-lg space-y-4 shadow-2xl">
+            <h4 class="font-black text-xl mb-4">تعديل السؤال</h4>
+            <input type="hidden" id="edit-qid"><input type="hidden" id="edit-qidx">
+            <textarea id="eq-text" class="w-full border-2 p-4 rounded-2xl h-24 focus:border-blue-600 outline-none"></textarea>
+            <div class="grid grid-cols-2 gap-3">
+                <input id="eq-o0" class="border p-3 rounded-xl text-sm font-bold"><input id="eq-o1" class="border p-3 rounded-xl text-sm font-bold">
+                <input id="eq-o2" class="border p-3 rounded-xl text-sm font-bold"><input id="eq-o3" class="border p-3 rounded-xl text-sm font-bold">
+            </div>
+            <label class="text-xs font-bold text-slate-400 block">رقم الإجابة الصحيحة (0=أ, 1=ب, 2=ج, 3=د):</label>
+            <input id="eq-ans" type="number" min="0" max="3" class="w-full border-2 p-3 rounded-xl bg-emerald-50 font-black text-center text-xl">
+            <div class="flex gap-3 pt-4">
+                <button onclick="admin.saveEdit()" class="flex-1 bg-emerald-600 text-white py-4 rounded-2xl font-black shadow-lg">حفظ التعديلات</button>
+                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="flex-1 bg-slate-100 py-4 rounded-2xl font-bold">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDvFOWeYV2grWux_Z-nl3uFiTR2Jd9UlvE",
+            authDomain: "tgrep-11831.firebaseapp.com",
+            databaseURL: "https://tgrep-11831-default-rtdb.firebaseio.com",
+            projectId: "tgrep-11831",
+            storageBucket: "tgrep-11831.firebasestorage.app",
+            messagingSenderId: "129365723816",
+            appId: "1:129365723816:web:be1fb88079c9a38ac2d09d"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        const dbRef = database.ref('edu_platform_data');
+        let db = { quizzes: [], files: [], settings: {} };
+
+        const app = {
+            login: () => {
+                const e = document.getElementById('adm-email').value;
+                const p = document.getElementById('adm-pass').value;
+                auth.signInWithEmailAndPassword(e, p).then(() => location.reload()).catch(err => alert("خطأ دخول: " + err.message));
+            },
+            logout: () => auth.signOut().then(() => location.reload()),
+            init: () => {
+                auth.onAuthStateChanged(user => {
+                    if(user) {
+                        document.getElementById('login-view').classList.add('hidden');
+                        document.getElementById('panel-view').classList.remove('hidden');
+                        document.getElementById('logout-btn').classList.remove('hidden');
+                        dbRef.on('value', snap => {
+                            if(snap.val()) db = snap.val();
+                            admin.loadSettings();
+                            admin.updateDropdowns();
+                            admin.renderTree();
+                        });
+                    }
+                });
+            }
+        };
+
+        const admin = {
+            switchTab: (t) => {
+                document.querySelectorAll('.adm-tab').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`tab-${t}`).classList.remove('hidden');
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.className = "tab-btn bg-white text-slate-500 px-8 py-3 rounded-2xl font-black text-sm shadow";
+                });
+                event.target.className = "tab-btn bg-slate-800 text-white px-8 py-3 rounded-2xl font-black text-sm shadow-lg";
+            },
+            toggleAddMode: (mode) => {
+                if(mode === 'manual') {
+                    document.getElementById('add-manual').classList.remove('hidden');
+                    document.getElementById('add-bulk').classList.add('hidden');
+                    document.getElementById('btn-manual').className = "flex-1 py-3 bg-blue-700 text-white rounded-xl font-bold shadow-md";
+                    document.getElementById('btn-bulk').className = "flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold";
+                } else {
+                    document.getElementById('add-manual').classList.add('hidden');
+                    document.getElementById('add-bulk').classList.remove('hidden');
+                    document.getElementById('btn-bulk').className = "flex-1 py-3 bg-purple-700 text-white rounded-xl font-bold shadow-md";
+                    document.getElementById('btn-manual').className = "flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold";
+                }
+            },
+            loadSettings: () => {
+                const s = db.settings || {};
+                document.getElementById('set-site-name').value = s.siteName || "";
+                document.getElementById('set-hero-title').value = s.heroTitle || "";
+                document.getElementById('set-hero-desc').value = s.heroDesc || "";
+                document.getElementById('set-whatsapp').value = s.whatsapp || "";
+                document.getElementById('set-access-code').value = s.accessCode || "";
+                document.getElementById('set-btn-vis').value = s.btnVisitorText || "";
+                document.getElementById('set-btn-sub').value = s.btnSubText || "";
+                document.getElementById('set-app-link').value = s.appLink || "";
+                document.getElementById('set-app-text').value = s.appText || "";
+                document.getElementById('set-sub-title').value = s.subscriberTitle || "";
+                document.getElementById('set-sub-msg').value = s.subscriberMsg || "";
+                document.getElementById('set-footer-text').value = s.footerText || "";
+                document.getElementById('set-tutorial').value = s.tutorialText || "";
+            },
+            saveSettings: () => {
+                db.settings = {
+                    siteName: document.getElementById('set-site-name').value,
+                    heroTitle: document.getElementById('set-hero-title').value,
+                    heroDesc: document.getElementById('set-hero-desc').value,
+                    whatsapp: document.getElementById('set-whatsapp').value,
+                    accessCode: document.getElementById('set-access-code').value,
+                    btnVisitorText: document.getElementById('set-btn-vis').value,
+                    btnSubText: document.getElementById('set-btn-sub').value,
+                    appLink: document.getElementById('set-app-link').value,
+                    appText: document.getElementById('set-app-text').value,
+                    subscriberTitle: document.getElementById('set-sub-title').value,
+                    subscriberMsg: document.getElementById('set-sub-msg').value,
+                    footerText: document.getElementById('set-footer-text').value,
+                    tutorialText: document.getElementById('set-tutorial').value
+                };
+                admin.save();
+                alert("تم تحديث كافة الإعدادات والبنرات بنجاح ✅");
+            },
+            addQuiz: () => {
+                const name = document.getElementById('new-quiz-name').value;
+                if(!name) return alert("اكتب اسم الاختبار");
+                if(!db.quizzes) db.quizzes = [];
+                db.quizzes.push({ id: Date.now(), name, mode: document.getElementById('adm-mode').value, major: document.getElementById('adm-major').value, minor: document.getElementById('adm-minor').value, questions: [] });
+                admin.save();
+                document.getElementById('new-quiz-name').value = "";
+                alert("تم إنشاء الاختبار");
+            },
+            updateDropdowns: () => {
+                const target = document.getElementById('adm-target-quiz');
+                target.innerHTML = (db.quizzes || []).map(q => `<option value="${q.id}">[${q.major}] - ${q.name}</option>`).join('');
+            },
+            addManualQ: () => {
+                const qid = document.getElementById('adm-target-quiz').value;
+                const quiz = db.quizzes.find(q => q.id == qid);
+                const opts = [document.getElementById('opt1').value.trim(), document.getElementById('opt2').value.trim(), document.getElementById('opt3').value.trim(), document.getElementById('opt4').value.trim()];
+                const ans = document.getElementById('q-ans').value.trim();
+                const idx = opts.indexOf(ans);
+                if(idx === -1) return alert("خطأ: الإجابة لا تطابق أي خيار");
+                if(!quiz.questions) quiz.questions = [];
+                quiz.questions.push({ text: document.getElementById('q-text').value, opts, correctAnswer: idx, hint: document.getElementById('q-hint').value });
+                admin.save();
+                document.getElementById('q-text').value = "";
+                alert("تم إضافة السؤال");
+            },
+            processJSON: () => {
+                const qid = document.getElementById('adm-target-quiz').value;
+                const quiz = db.quizzes.find(q => q.id == qid);
+                try {
+                    let data = JSON.parse(document.getElementById('json-input').value);
+                    if(!Array.isArray(data)) data = [data];
+                    if(!quiz.questions) quiz.questions = [];
+                    data.forEach(item => {
+                        const text = item.question || item.text;
+                        const opts = item.options || item.opts;
+                        const correct = item.correctAnswer;
+                        if(text && opts && correct !== undefined) quiz.questions.push({ text, opts, correctAnswer: parseInt(correct), hint: item.hint || "" });
+                    });
+                    admin.save();
+                    document.getElementById('json-input').value = "";
+                    alert("تم الاستيراد بنجاح ✅");
+                } catch(e) { alert("خطأ JSON: " + e.message); }
+            },
+            addFile: () => {
+                const name = document.getElementById('file-name').value;
+                const url = document.getElementById('file-url').value;
+                if(!name || !url) return alert("بيانات ناقصة");
+                if(!db.files) db.files = [];
+                db.files.push({ id: Date.now(), name, url, mode: document.getElementById('file-mode').value, major: document.getElementById('file-major').value, minor: document.getElementById('file-minor').value });
+                admin.save();
+                alert("تم حفظ الملف");
+            },
+            renderTree: () => {
+                const tree = document.getElementById('admin-tree');
+                tree.innerHTML = "";
+                (db.quizzes || []).forEach(q => {
+                    const d = document.createElement('div');
+                    d.className = "bg-slate-50 border-2 border-slate-100 p-6 rounded-3xl shadow-sm mb-4";
+                    d.innerHTML = `
+                        <div class="flex justify-between items-center mb-4">
+                            <div><span class="text-[10px] font-black bg-blue-100 text-blue-600 px-3 py-1 rounded-full uppercase">${q.major} > ${q.minor}</span><h5 class="font-bold text-lg mt-1">${q.name} <span class="text-xs text-slate-400">(${q.questions?.length || 0} سؤال)</span></h5></div>
+                            <div class="flex gap-2">
+                                <button onclick="admin.deleteQuiz(${q.id})" class="text-red-500 hover:text-red-700 px-2"><i class="fas fa-trash"></i></button>
+                                <button onclick="document.getElementById('tree-qs-${q.id}').classList.toggle('hidden')" class="bg-white border px-4 py-1 rounded-xl text-xs font-bold shadow-sm">إدارة الأسئلة</button>
+                            </div>
+                        </div>
+                        <div id="tree-qs-${q.id}" class="hidden space-y-2 mt-4 pt-4 border-t-2 border-dashed">
+                            ${(q.questions || []).map((qs, i) => `
+                                <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm text-xs border border-slate-50">
+                                    <div class="flex items-center gap-2">
+                                        <input type="checkbox" class="q-select" data-qid="${q.id}" data-idx="${i}" onchange="admin.updateBatchBtn()">
+                                        <span class="truncate w-48 font-bold">${i+1}. ${qs.text}</span>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <button onclick="admin.move(${q.id}, ${i}, -1)" class="p-1 text-slate-400 hover:text-blue-600"><i class="fas fa-arrow-up"></i></button>
+                                        <button onclick="admin.move(${q.id}, ${i}, 1)" class="p-1 text-slate-400 hover:text-blue-600"><i class="fas fa-arrow-down"></i></button>
+                                        <button onclick="admin.openEdit(${q.id}, ${i})" class="p-1 text-emerald-500"><i class="fas fa-edit"></i></button>
+                                        <button onclick="admin.deleteQ(${q.id}, ${i})" class="p-1 text-red-500"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    tree.appendChild(d);
+                });
+                // ملفات
+                const fDiv = document.createElement('div'); fDiv.className = "pt-6 border-t mt-6"; fDiv.innerHTML = '<h3 class="font-black text-red-600 mb-4">الملفات والملازم النشطة:</h3>';
+                (db.files || []).forEach(f => {
+                    fDiv.innerHTML += `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center mb-2 text-sm shadow-sm"><span>${f.name} (${f.major})</span><button onclick="admin.deleteFile(${f.id})" class="text-red-500"><i class="fas fa-trash"></i></button></div>`;
+                });
+                tree.appendChild(fDiv);
+            },
+            updateBatchBtn: () => {
+                const checked = document.querySelectorAll('.q-select:checked');
+                const btn = document.getElementById('batch-del-btn');
+                btn.classList.toggle('hidden', checked.length === 0);
+                btn.innerText = `حذف الأسئلة المختارة (${checked.length})`;
+            },
+            batchDelete: () => {
+                if(!confirm("حذف كافة الأسئلة المختارة؟")) return;
+                const checked = Array.from(document.querySelectorAll('.q-select:checked'));
+                checked.reverse().forEach(chk => {
+                    const qid = chk.dataset.qid; const idx = parseInt(chk.dataset.idx);
+                    const quiz = db.quizzes.find(q => q.id == qid); quiz.questions.splice(idx, 1);
+                });
+                admin.save();
+            },
+            move: (qid, idx, dir) => {
+                const quiz = db.quizzes.find(q => q.id == qid);
+                const newIdx = idx + dir;
+                if(newIdx < 0 || newIdx >= quiz.questions.length) return;
+                [quiz.questions[idx], quiz.questions[newIdx]] = [quiz.questions[newIdx], quiz.questions[idx]];
+                admin.save();
+            },
+            openEdit: (qid, idx) => {
+                const quiz = db.quizzes.find(q => q.id == qid); const q = quiz.questions[idx];
+                document.getElementById('edit-qid').value = qid; document.getElementById('edit-qidx').value = idx;
+                document.getElementById('eq-text').value = q.text;
+                document.getElementById('eq-o0').value = q.opts[0]; document.getElementById('eq-o1').value = q.opts[1];
+                document.getElementById('eq-o2').value = q.opts[2]; document.getElementById('eq-o3').value = q.opts[3];
+                document.getElementById('eq-ans').value = q.correctAnswer;
+                document.getElementById('edit-modal').classList.remove('hidden');
+            },
+            saveEdit: () => {
+                const qid = document.getElementById('edit-qid').value; const idx = document.getElementById('edit-qidx').value;
+                const quiz = db.quizzes.find(q => q.id == qid);
+                quiz.questions[idx] = {
+                    text: document.getElementById('eq-text').value,
+                    opts: [document.getElementById('eq-o0').value, document.getElementById('eq-o1').value, document.getElementById('eq-o2').value, document.getElementById('eq-o3').value],
+                    correctAnswer: parseInt(document.getElementById('eq-ans').value)
+                };
+                document.getElementById('edit-modal').classList.add('hidden'); admin.save();
+            },
+            deleteQuiz: (id) => { if(confirm("حذف الاختبار بالكامل؟")) { db.quizzes = db.quizzes.filter(q => q.id !== id); admin.save(); } },
+            deleteQ: (qid, idx) => { if(confirm("حذف السؤال؟")) { const quiz = db.quizzes.find(q => q.id == qid); quiz.questions.splice(idx, 1); admin.save(); } },
+            deleteFile: (id) => { if(confirm("حذف الملف؟")) { db.files = db.files.filter(f => f.id !== id); admin.save(); } },
+            nuke: () => { if(confirm("تحذير نهائي: سيتم مسح المنصة بالكامل!")) { db = {quizzes:[], files:[], settings: db.settings}; admin.save(); } },
+            save: () => dbRef.set(db)
+        };
+        app.init();
+    </script>
+
+</body></html>
