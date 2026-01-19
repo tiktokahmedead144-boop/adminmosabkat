@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم الشاملة | أ. أحمد عيد</title>
+    <title>لوحة القيادة | أ. أحمد عيد</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -16,17 +16,29 @@
         .adm-tab { display: none; }
         .adm-tab.active { display: block; animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .tab-btn { transition: all 0.3s; }
-        .tab-btn.active { background-color: #0f172a; color: white; transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input:focus, textarea:focus, select:focus { border-color: #10b981; outline: none; ring: 2px; ring-color: #10b981; }
+        .tab-btn { transition: all 0.3s; opacity: 0.7; }
+        .tab-btn.active { background-color: #0f172a; color: white; opacity: 1; transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input:focus, textarea:focus, select:focus { border-color: #10b981; outline: none; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+        
+        /* تصميم الإشعار الاحترافي */
+        #toast-notification {
+            transform: translateY(-150%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        #toast-notification.show { transform: translateY(0); }
     </style>
 </head>
 <body class="pb-20 text-slate-800">
 
+    <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold min-w-[300px] justify-center">
+        <i id="toast-icon" class="text-xl"></i>
+        <span id="toast-msg"></span>
+    </div>
+
     <nav class="bg-slate-900 text-white p-4 shadow-xl sticky top-0 z-50 border-b-4 border-emerald-500">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-black flex items-center gap-2">
-                <i class="fas fa-sliders-h text-emerald-400"></i> لوحة الإدارة الكاملة
+                <i class="fas fa-sliders-h text-emerald-400"></i> لوحة الإدارة
             </h1>
             <button onclick="app.logout()" class="hidden id-logout bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl font-bold text-xs transition-all">خروج</button>
         </div>
@@ -132,7 +144,7 @@
                         <button onclick="admin.addManualQ()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-black">حفظ السؤال</button>
                     </div>
                     <div id="add-bulk" class="hidden space-y-3">
-                        <p class="text-[10px] font-bold text-slate-500">صيغة JSON: <span dir="ltr"><code>[{"question":"...","options":["..."],"correctAnswer":0}, ...]</code></span></p>
+                        <p class="text-[10px] font-bold text-slate-500">ضع الأسئلة داخل مصفوفة <code>[...]</code> وتأكد من الفواصل.</p>
                         <textarea id="json-input" class="w-full bg-slate-900 text-green-400 font-mono p-4 rounded-xl h-32 text-xs" dir="ltr"></textarea>
                         <button onclick="admin.processJSON()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-black">استيراد</button>
                     </div>
@@ -222,10 +234,20 @@
         const app = {
             login: () => {
                 const e = document.getElementById('adm-email').value, p = document.getElementById('adm-pass').value;
-                if(!e||!p) return alert("البيانات ناقصة");
-                firebase.auth().signInWithEmailAndPassword(e,p).then(()=>location.reload()).catch(err=>alert(err.message));
+                if(!e||!p) return app.notify("البيانات ناقصة", "error");
+                firebase.auth().signInWithEmailAndPassword(e,p).then(()=>location.reload()).catch(err=>app.notify(err.message, "error"));
             },
             logout: () => firebase.auth().signOut().then(()=>location.reload()),
+            notify: (msg, type='success') => {
+                const t = document.getElementById('toast-notification');
+                const i = document.getElementById('toast-icon');
+                const m = document.getElementById('toast-msg');
+                t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold min-w-[300px] justify-center transition-all duration-300 ${type==='error'?'bg-red-600':'bg-emerald-600'}`;
+                i.className = type==='error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+                m.innerText = msg;
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 3000);
+            },
             init: () => {
                 firebase.auth().onAuthStateChanged(user => {
                     if(user) {
@@ -255,7 +277,6 @@
                 const ids = ['set-site-name', 'set-hero-title', 'set-hero-desc', 'set-whatsapp', 'set-access-code', 'set-footer-text', 'set-tutorial', 'set-ext-link-url', 'set-ext-link-text', 'set-app-link', 'set-app-text', 'set-btn-visitor', 'set-btn-sub'];
                 ids.forEach(id => { 
                     const k = id.replace('set-','').replace(/-./g, x=>x[1].toUpperCase());
-                    // Special case for tutorial
                     if(id === 'set-tutorial' && s.tutorialText) document.getElementById(id).value = s.tutorialText;
                     else if(document.getElementById(id)) document.getElementById(id).value = s[k] || ""; 
                 });
@@ -267,11 +288,11 @@
                     if(k === 'tutorialText') id = 'set-tutorial';
                     s[k] = document.getElementById(id).value;
                 });
-                db.settings = s; admin.save(); alert("تم الحفظ بنجاح");
+                db.settings = s; admin.save(); app.notify("تم الحفظ بنجاح");
             },
             addQuiz: () => {
                 const n = document.getElementById('new-quiz-name').value;
-                if(!n) return alert("الاسم مطلوب");
+                if(!n) return app.notify("الاسم مطلوب", "error");
                 if(!db.quizzes) db.quizzes = [];
                 db.quizzes.push({
                     id: Date.now(), name: n,
@@ -280,29 +301,31 @@
                     minor: document.getElementById('adm-minor').value,
                     questions: []
                 });
-                admin.save(); alert("تم إضافة الاختبار");
+                admin.save(); app.notify("تم إضافة الاختبار");
             },
             addManualQ: () => {
                 const qid = document.getElementById('adm-target-quiz').value;
                 const q = db.quizzes.find(x=>x.id==qid);
-                if(!q) return alert("اختر اختبار");
+                if(!q) return app.notify("اختر اختبار", "error");
                 if(!q.questions) q.questions = [];
                 q.questions.push({
                     text: document.getElementById('q-text').value,
                     opts: [1,2,3,4].map(i=>document.getElementById('opt'+i).value),
                     correctAnswer: [1,2,3,4].map(i=>document.getElementById('opt'+i).value).indexOf(document.getElementById('q-ans').value)
                 });
-                admin.save(); alert("تم إضافة السؤال");
+                admin.save(); app.notify("تم إضافة السؤال");
             },
             processJSON: () => {
                 try {
-                    const data = JSON.parse(document.getElementById('json-input').value);
+                    let val = document.getElementById('json-input').value.trim();
+                    if(!val.startsWith('[') && val.startsWith('{')) val = `[${val}]`; // محاولة تصحيح بسيطة
+                    const data = JSON.parse(val);
                     const qid = document.getElementById('adm-target-quiz').value;
                     const q = db.quizzes.find(x=>x.id==qid);
                     if(!q.questions) q.questions = [];
                     (Array.isArray(data)?data:[data]).forEach(i => q.questions.push({text:i.question, opts:i.options, correctAnswer:i.correctAnswer}));
-                    admin.save(); alert("تم الاستيراد");
-                } catch(e) { alert("خطأ في صيغة JSON"); }
+                    admin.save(); app.notify("تم الاستيراد بنجاح");
+                } catch(e) { app.notify("تأكد من صيغة الملف (JSON Array)", "error"); }
             },
             addFile: () => {
                 if(!db.files) db.files = [];
@@ -313,11 +336,11 @@
                     major: document.getElementById('file-major').value,
                     minor: document.getElementById('file-minor').value
                 });
-                admin.save(); alert("تم إضافة الملف");
+                admin.save(); app.notify("تم إضافة الملف");
             },
             createSimulation: () => {
                 const name = document.getElementById('new-sim-name').value;
-                if(!name) return alert("اسم المحاكي مطلوب");
+                if(!name) return app.notify("اسم المحاكي مطلوب", "error");
                 if(!db.simulations) db.simulations = [];
                 db.simulations.push({
                     id: Date.now(),
@@ -334,7 +357,7 @@
                         gen: parseInt(document.getElementById('ns-gen').value)||0
                     }
                 });
-                admin.save(); alert("تم إنشاء المحاكي الجديد");
+                admin.save(); app.notify("تم إنشاء المحاكي");
             },
             renderTree: () => {
                 const t = document.getElementById('admin-tree'); t.innerHTML = "";
@@ -431,7 +454,7 @@
                 };
                 admin.save();
                 document.getElementById('edit-q-modal').classList.add('hidden');
-                alert("تم التعديل بنجاح");
+                app.notify("تم التعديل");
             },
             delItem: (type, id) => {
                 if(!confirm("تأكيد الحذف؟")) return;
