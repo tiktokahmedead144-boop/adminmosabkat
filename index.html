@@ -3,169 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المنصة التعليمية</title>
+    <title>لوحة التحكم الشاملة | أ. أحمد عيد</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
-        body { font-family: 'Cairo', sans-serif; background-color: #f4f7f6; user-select: none; }
-        .hidden { display: none !important; }
-        .modal-animate { animation: slideUp 0.4s ease-out; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .locked-item { opacity: 0.7; filter: grayscale(90%); cursor: not-allowed; position: relative; }
-        .locked-item::after { content: '\f023'; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 2rem; color: #ef4444; background: rgba(255,255,255,0.9); padding: 15px; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .opt-btn { width: 100%; padding: 1.25rem; border: 2px solid #e2e8f0; border-radius: 1rem; font-weight: bold; transition: all 0.2s; background: white; text-align: right; }
-        .opt-btn:hover:not(:disabled) { border-color: #10b981; background: #ecfdf5; }
-        .correct { background: #d1fae5 !important; border-color: #10b981 !important; color: #065f46; }
-        .wrong { background: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b; }
+        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .adm-tab { display: none; }
+        .adm-tab.active { display: block; animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .tab-btn { transition: all 0.3s; }
+        .tab-btn.active { background-color: #0f172a; color: white; transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input:focus, textarea:focus, select:focus { border-color: #10b981; outline: none; ring: 2px; ring-color: #10b981; }
     </style>
 </head>
-<body class="text-slate-800 pb-24">
+<body class="pb-20 text-slate-800">
 
-    <div id="loading" class="fixed inset-0 bg-white z-[999] flex flex-col items-center justify-center">
-        <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p class="font-bold text-slate-500">جاري التحميل...</p>
-    </div>
-
-    <div id="app-banner" class="hidden p-3 bg-gradient-to-r from-blue-900 to-blue-700 text-white sticky top-0 z-50 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center px-4">
-            <span class="font-bold text-xs md:text-sm" id="ui-app-text"></span>
-            <a id="ui-app-link" href="#" target="_blank" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full text-xs font-black">تحميل</a>
-        </div>
-    </div>
-
-    <nav class="bg-white border-b-4 border-emerald-500 p-4 shadow-sm relative z-40">
+    <nav class="bg-slate-900 text-white p-4 shadow-xl sticky top-0 z-50 border-b-4 border-emerald-500">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl md:text-2xl font-black text-emerald-800 cursor-pointer" onclick="location.reload()">
-                <i class="fas fa-graduation-cap"></i> <span id="ui-site-name">المنصة</span>
+            <h1 class="text-xl font-black flex items-center gap-2">
+                <i class="fas fa-sliders-h text-emerald-400"></i> لوحة الإدارة الكاملة
             </h1>
+            <button onclick="app.logout()" class="hidden id-logout bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl font-bold text-xs transition-all">خروج</button>
         </div>
     </nav>
 
-    <main class="container mx-auto px-4 py-8 space-y-8">
+    <div class="container mx-auto px-4 py-8">
         
-        <section id="landing" class="view-section hidden space-y-10">
-            <div class="text-center space-y-3">
-                <h2 class="text-4xl md:text-6xl font-black text-slate-900" id="ui-hero-title"></h2>
-                <p class="text-slate-500 font-bold text-xl" id="ui-hero-desc"></p>
+        <div id="login-view" class="max-w-md mx-auto bg-white p-10 rounded-[2.5rem] shadow-2xl mt-12 text-center border-t-8 border-slate-900">
+            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6"><i class="fas fa-user-lock text-3xl text-slate-800"></i></div>
+            <h2 class="text-3xl font-black mb-8">تسجيل دخول المدير</h2>
+            <div class="space-y-4">
+                <input type="email" id="adm-email" placeholder="البريد الإلكتروني" class="w-full border-2 p-4 rounded-2xl font-bold">
+                <input type="password" id="adm-pass" placeholder="كلمة المرور" class="w-full border-2 p-4 rounded-2xl font-bold">
+                <button onclick="app.login()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-black transition-all">دخول آمن</button>
             </div>
+        </div>
 
-            <div id="ui-tutorial-box" class="hidden bg-blue-50 border-r-8 border-blue-600 p-6 rounded-2xl max-w-3xl mx-auto shadow-sm">
-                <p id="ui-tutorial-text" class="font-bold text-slate-700 leading-relaxed"></p>
-            </div>
-
-            <div id="ui-ext-link-area" class="hidden text-center">
-                <a id="ui-ext-link" href="#" target="_blank" class="inline-flex items-center gap-2 bg-yellow-400 text-slate-900 px-8 py-3 rounded-full font-black shadow-lg hover:scale-105 transition-all">
-                    <i class="fas fa-link"></i> <span id="ui-ext-text"></span>
-                </a>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                <div onclick="app.enterVisitor()" class="bg-white p-8 rounded-[2.5rem] shadow-xl border-b-[8px] border-slate-300 cursor-pointer hover:-translate-y-2 transition-all text-center">
-                    <i class="fas fa-user text-5xl text-slate-400 mb-4"></i>
-                    <h3 class="text-2xl font-black text-slate-700" id="ui-btn-vis">دخول كزائر</h3>
-                </div>
-                <div onclick="app.enterSubscriber()" class="bg-white p-8 rounded-[2.5rem] shadow-xl border-b-[8px] border-emerald-500 cursor-pointer hover:-translate-y-2 transition-all text-center">
-                    <i class="fas fa-crown text-5xl text-emerald-500 mb-4"></i>
-                    <h3 class="text-2xl font-black text-emerald-700" id="ui-btn-sub">دخول المشتركين</h3>
-                </div>
-            </div>
-        </section>
-
-        <section id="dashboard" class="view-section hidden space-y-8">
-            <div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
-                <button onclick="app.showSection('landing')" class="bg-slate-100 px-4 py-2 rounded-xl font-bold text-xs text-slate-500">خروج</button>
-                <span id="user-status" class="font-black text-xs"></span>
-            </div>
-
-            <div id="simulations-list" class="space-y-4"></div>
-
-            <div class="text-center"><h2 class="text-3xl font-black text-slate-800">الأقسام الرئيسية</h2></div>
+        <div id="panel-view" class="hidden space-y-8">
             
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-5">
-                <button onclick="app.selectMajor('Competition')" class="col-span-2 md:col-span-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white p-6 rounded-3xl shadow-lg border-b-8 border-orange-800 hover:scale-[1.01] transition-all flex items-center justify-center gap-3">
-                    <i class="fas fa-trophy text-3xl text-yellow-200"></i>
-                    <div class="text-right"><span class="block font-black text-xl">مسابقات وملفات عامة</span></div>
-                </button>
-                <button onclick="app.selectMajor('لغة عربية')" class="bg-white p-6 rounded-3xl shadow border-b-8 border-emerald-500 font-black text-lg hover:-translate-y-1 transition-all">لغة عربية</button>
-                <button onclick="app.selectMajor('رياضيات')" class="bg-white p-6 rounded-3xl shadow border-b-8 border-blue-600 font-black text-lg hover:-translate-y-1 transition-all">رياضيات</button>
-                <button onclick="app.selectMajor('علوم')" class="bg-white p-6 rounded-3xl shadow border-b-8 border-purple-600 font-black text-lg hover:-translate-y-1 transition-all">علوم</button>
-                <button onclick="app.selectMajor('دراسات')" class="bg-white p-6 rounded-3xl shadow border-b-8 border-amber-500 font-black text-lg hover:-translate-y-1 transition-all">دراسات</button>
-                <button onclick="app.selectMajor('لغة إنجليزية')" class="bg-white p-6 rounded-3xl shadow border-b-8 border-rose-500 font-black text-lg hover:-translate-y-1 transition-all">English</button>
+            <div class="flex gap-3 overflow-x-auto pb-4 no-scrollbar justify-center">
+                <button onclick="admin.switchTab('settings')" class="tab-btn active bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow">🛠️ الإعدادات</button>
+                <button onclick="admin.switchTab('create')" class="tab-btn bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow">📝 إنشاء محتوى</button>
+                <button onclick="admin.switchTab('simulation')" class="tab-btn bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow border-2 border-yellow-200">⚙️ إنشاء محاكي</button>
+                <button onclick="admin.switchTab('manage')" class="tab-btn bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow">🗂️ إدارة وتعديل</button>
             </div>
-        </section>
 
-        <section id="sub-dashboard" class="view-section hidden space-y-6">
-            <div class="flex justify-between items-center mb-4">
-                <button onclick="app.showSection('dashboard')" class="text-blue-600 font-bold text-sm">تغيير القسم</button>
-                <h3 id="major-title" class="font-black text-xl"></h3>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <button onclick="app.selectMinor('تخصص')" class="md:col-span-2 lg:col-span-3 p-8 bg-slate-800 text-white rounded-3xl shadow-xl border-r-[8px] border-yellow-400 flex justify-between items-center hover:bg-slate-900 transition-all">
-                    <div class="text-right"><h4 class="text-2xl font-black mb-1">أسئلة التخصص</h4></div><i class="fas fa-star text-4xl text-yellow-400"></i>
-                </button>
-                <button onclick="app.selectMinor('تربوي')" class="p-5 bg-white rounded-2xl shadow font-bold hover:bg-slate-50">التربوي</button>
-                <button onclick="app.selectMinor('جدارات')" class="p-5 bg-white rounded-2xl shadow font-bold hover:bg-slate-50">الجدارات</button>
-                <button onclick="app.selectMinor('IQ')" class="p-5 bg-white rounded-2xl shadow font-bold hover:bg-slate-50">IQ والذكاء</button>
-                <button onclick="app.selectMinor('عربي للجميع')" class="p-5 bg-white rounded-2xl shadow font-bold hover:bg-slate-50">عربي للجميع</button>
-                <button onclick="app.selectMinor('انجليزي للجميع')" class="p-5 bg-white rounded-2xl shadow font-bold hover:bg-slate-50">انجليزي للجميع</button>
-                <button onclick="app.selectMinor('معلومات عامة')" class="p-5 bg-white rounded-2xl shadow font-bold hover:bg-slate-50">معلومات عامة</button>
-            </div>
-        </section>
-
-        <section id="content-list" class="view-section hidden space-y-8">
-            <div class="flex justify-between items-center mb-4">
-                <button onclick="app.showSection('sub-dashboard')" class="bg-slate-200 px-4 py-2 rounded-xl font-bold text-sm">رجوع</button>
-                <h3 id="list-title" class="font-black text-lg text-emerald-800"></h3>
-            </div>
-            <div id="files-box" class="hidden">
-                <h4 class="font-black text-red-600 mb-3 flex items-center gap-2"><i class="fas fa-folder-open"></i> الملفات:</h4>
-                <div id="files-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
-            <div id="quizzes-box">
-                <h4 class="font-black text-blue-600 mb-3 flex items-center gap-2"><i class="fas fa-list-check"></i> الاختبارات:</h4>
-                <div id="quizzes-grid" class="space-y-4"></div>
-            </div>
-        </section>
-
-        <section id="exam-player" class="view-section hidden max-w-2xl mx-auto space-y-6">
-            <div class="bg-white p-4 rounded-3xl shadow-lg border-t-8 border-emerald-500 sticky top-20 z-30">
-                <div class="flex justify-between mb-2">
-                    <span id="timer-display" class="font-black text-red-500 text-lg hidden">00:00</span>
-                    <span id="progress-text" class="text-xs font-black text-emerald-600"></span>
-                    <button onclick="location.reload()" class="text-xs font-bold text-red-400">خروج</button>
+            <div id="tab-settings" class="adm-tab active block bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                <h3 class="font-black text-xl mb-6 text-emerald-700 border-r-4 border-emerald-500 pr-3">إعدادات النصوص والروابط</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-50 p-5 rounded-3xl space-y-3">
+                        <h4 class="font-bold text-slate-800 mb-2">البيانات الأساسية</h4>
+                        <div><label class="text-[10px] font-bold text-slate-400">اسم المنصة:</label><input id="set-site-name" class="w-full border p-2 rounded-xl font-bold"></div>
+                        <div><label class="text-[10px] font-bold text-slate-400">العنوان الرئيسي (Hero):</label><input id="set-hero-title" class="w-full border p-2 rounded-xl font-bold"></div>
+                        <div><label class="text-[10px] font-bold text-slate-400">الوصف:</label><input id="set-hero-desc" class="w-full border p-2 rounded-xl font-bold"></div>
+                        <div><label class="text-[10px] font-bold text-yellow-600">كود المشتركين (Password):</label><input id="set-access-code" class="w-full border p-2 rounded-xl bg-yellow-50 font-black text-center text-lg"></div>
+                    </div>
+                    <div class="bg-slate-50 p-5 rounded-3xl space-y-3">
+                        <h4 class="font-bold text-slate-800 mb-2">الأزرار والتواصل</h4>
+                        <div><label class="text-[10px] font-bold text-slate-400">واتساب:</label><input id="set-whatsapp" class="w-full border p-2 rounded-xl font-bold"></div>
+                        <div><label class="text-[10px] font-bold text-slate-400">نص الفوتر:</label><input id="set-footer-text" class="w-full border p-2 rounded-xl font-bold"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-[10px] font-bold text-slate-400">زر الزوار:</label><input id="set-btn-visitor" class="w-full border p-2 rounded-xl font-bold"></div>
+                            <div><label class="text-[10px] font-bold text-slate-400">زر المشتركين:</label><input id="set-btn-sub" class="w-full border p-2 rounded-xl font-bold"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div id="progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-slate-800 p-5 rounded-3xl space-y-2 text-white">
+                        <h4 class="font-bold text-yellow-400">الرابط الخارجي</h4>
+                        <input id="set-ext-link-url" placeholder="URL" class="w-full bg-slate-700 border-none p-2 rounded-xl text-xs">
+                        <input id="set-ext-link-text" placeholder="النص" class="w-full bg-slate-700 border-none p-2 rounded-xl text-xs">
+                    </div>
+                    <div class="bg-blue-50 p-5 rounded-3xl space-y-2">
+                        <h4 class="font-bold text-blue-600">تطبيق الهاتف</h4>
+                        <input id="set-app-link" placeholder="رابط التحميل" class="w-full bg-white border p-2 rounded-xl text-xs">
+                        <input id="set-app-text" placeholder="نص البنر" class="w-full bg-white border p-2 rounded-xl text-xs">
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <label class="text-xs font-bold text-slate-400">تعليمات الصفحة الرئيسية:</label>
+                    <textarea id="set-tutorial" class="w-full border p-3 rounded-2xl h-24 font-bold bg-slate-50 text-slate-700"></textarea>
+                </div>
+                <button onclick="admin.saveSettings()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl mt-6 font-black shadow-lg hover:bg-emerald-700 transition-all">حفظ الإعدادات ✅</button>
+            </div>
+
+            <div id="tab-create" class="adm-tab space-y-6">
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-blue-600">
+                    <h4 class="font-black text-lg mb-4 text-blue-800">1. إنشاء اختبار جديد</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <select id="adm-mode" class="w-full border p-3 rounded-xl font-bold bg-slate-50"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select>
+                        <select id="adm-major" class="w-full border p-3 rounded-xl font-bold bg-slate-50">
+                            <option value="Universal">عام</option><option value="Competition">مسابقات</option>
+                            <option value="لغة عربية">لغة عربية</option><option value="رياضيات">رياضيات</option>
+                            <option value="علوم">علوم</option><option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option>
+                        </select>
+                        <select id="adm-minor" class="w-full border p-3 rounded-xl font-bold bg-slate-50">
+                            <option value="تخصص">أسئلة التخصص</option><option value="تربوي">تربوي</option>
+                            <option value="جدارات">جدارات</option><option value="IQ">IQ</option>
+                            <option value="عربي للجميع">عربي للجميع</option><option value="انجليزي للجميع">انجليزي للجميع</option>
+                            <option value="معلومات عامة">معلومات عامة</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <input id="new-quiz-name" placeholder="اسم الاختبار" class="flex-1 border-2 p-3 rounded-xl font-bold">
+                        <button onclick="admin.addQuiz()" class="bg-blue-600 text-white px-6 rounded-xl font-black">إنشاء</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-purple-600">
+                    <h4 class="font-black text-lg mb-4 text-purple-800">2. إضافة الأسئلة</h4>
+                    <select id="adm-target-quiz" class="w-full border-2 p-3 rounded-xl font-bold bg-purple-50 mb-4"></select>
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="document.getElementById('add-manual').classList.remove('hidden');document.getElementById('add-bulk').classList.add('hidden')" class="flex-1 bg-purple-600 text-white py-2 rounded-xl font-bold">يدوي</button>
+                        <button onclick="document.getElementById('add-bulk').classList.remove('hidden');document.getElementById('add-manual').classList.add('hidden')" class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-xl font-bold">مجمع (JSON)</button>
+                    </div>
+                    <div id="add-manual" class="space-y-3">
+                        <textarea id="q-text" placeholder="نص السؤال" class="w-full border p-3 rounded-xl h-20 font-bold"></textarea>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input id="opt1" placeholder="أ" class="border p-2 rounded-lg font-bold"><input id="opt2" placeholder="ب" class="border p-2 rounded-lg font-bold">
+                            <input id="opt3" placeholder="ج" class="border p-2 rounded-lg font-bold"><input id="opt4" placeholder="د" class="border p-2 rounded-lg font-bold">
+                        </div>
+                        <input id="q-ans" placeholder="الإجابة الصحيحة" class="w-full border bg-emerald-50 p-3 rounded-xl font-bold text-center">
+                        <button onclick="admin.addManualQ()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-black">حفظ السؤال</button>
+                    </div>
+                    <div id="add-bulk" class="hidden space-y-3">
+                        <p class="text-[10px] font-bold text-slate-500">صيغة JSON: <span dir="ltr"><code>[{"question":"...","options":["..."],"correctAnswer":0}, ...]</code></span></p>
+                        <textarea id="json-input" class="w-full bg-slate-900 text-green-400 font-mono p-4 rounded-xl h-32 text-xs" dir="ltr"></textarea>
+                        <button onclick="admin.processJSON()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-black">استيراد</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-red-600">
+                    <h4 class="font-black text-lg mb-4 text-red-700">3. إضافة ملفات</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                         <select id="file-mode" class="border p-3 rounded-xl font-bold"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select>
+                         <select id="file-major" class="border p-3 rounded-xl font-bold">
+                            <option value="Competition">مسابقات</option><option value="لغة عربية">لغة عربية</option>
+                            <option value="رياضيات">رياضيات</option><option value="علوم">علوم</option>
+                            <option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option>
+                         </select>
+                         <select id="file-minor" class="border p-3 rounded-xl font-bold"><option value="ملفات">ملفات التخصص</option><option value="تربوي">تربوي</option></select>
+                    </div>
+                    <input id="file-name" placeholder="اسم الملف" class="w-full border p-3 rounded-xl font-bold mb-2">
+                    <input id="file-url" placeholder="الرابط" class="w-full border p-3 rounded-xl font-bold mb-2 text-left" dir="ltr">
+                    <button onclick="admin.addFile()" class="w-full bg-red-600 text-white py-3 rounded-xl font-black">حفظ الملف</button>
                 </div>
             </div>
-            <div id="question-box"></div>
-            <div id="result-box" class="hidden bg-white p-10 rounded-[3rem] shadow-2xl text-center border-t-[10px] border-emerald-600">
-                <i class="fas fa-award text-6xl text-yellow-400 mb-6 block animate-bounce"></i>
-                <h2 class="text-3xl font-black mb-2">النتيجة النهائية</h2>
-                <p id="res-score" class="text-6xl font-black text-slate-800 mb-8"></p>
-                <button onclick="location.reload()" class="bg-slate-900 text-white px-10 py-4 rounded-full font-black text-xl shadow-lg hover:bg-black">العودة للرئيسية</button>
+
+            <div id="tab-simulation" class="adm-tab bg-white p-6 rounded-[2rem] shadow-sm border border-yellow-400">
+                <h3 class="font-black text-xl mb-6 text-slate-800">⚙️ إنشاء اختبار محاكي جديد</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div><label class="text-xs font-bold block">اسم المحاكاة</label><input id="new-sim-name" placeholder="مثلاً: المحاكي الأول" class="border p-2 w-full rounded-lg font-bold"></div>
+                    <div><label class="text-xs font-bold block">الحالة</label><select id="new-sim-mode" class="border p-2 w-full rounded-lg font-bold"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select></div>
+                </div>
+                <p class="text-xs text-slate-500 font-bold mb-2">توزيع الأسئلة:</p>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                    <div><label class="text-[10px] font-bold block">تخصص</label><input type="number" id="ns-spec" class="border p-2 w-full rounded-lg text-center" value="15"></div>
+                    <div><label class="text-[10px] font-bold block">تربوي</label><input type="number" id="ns-ped" class="border p-2 w-full rounded-lg text-center" value="10"></div>
+                    <div><label class="text-[10px] font-bold block">جدارات</label><input type="number" id="ns-comp" class="border p-2 w-full rounded-lg text-center" value="5"></div>
+                    <div><label class="text-[10px] font-bold block">IQ</label><input type="number" id="ns-iq" class="border p-2 w-full rounded-lg text-center" value="5"></div>
+                    <div><label class="text-[10px] font-bold block">عربي</label><input type="number" id="ns-ar" class="border p-2 w-full rounded-lg text-center" value="5"></div>
+                    <div><label class="text-[10px] font-bold block">إنجليزي</label><input type="number" id="ns-en" class="border p-2 w-full rounded-lg text-center" value="5"></div>
+                    <div><label class="text-[10px] font-bold block">معلومات</label><input type="number" id="ns-gen" class="border p-2 w-full rounded-lg text-center" value="5"></div>
+                    <div><label class="text-[10px] font-bold block text-red-500">الوقت (د)</label><input type="number" id="ns-time" class="border p-2 w-full rounded-lg text-center bg-red-50" value="60"></div>
+                </div>
+                <button onclick="admin.createSimulation()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black">إضافة المحاكي</button>
             </div>
-        </section>
-    </main>
 
-    <footer class="fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-50 flex justify-between items-center px-6">
-        <p id="footer-text" class="text-xs font-bold text-slate-400"></p>
-        <a id="phone-link" href="#" class="flex items-center gap-2 text-emerald-600 font-black">
-            <span id="phone-display"></span> <i class="fab fa-whatsapp text-xl"></i>
-        </a>
-    </footer>
+            <div id="tab-manage" class="adm-tab bg-white p-6 rounded-[2rem] shadow-sm">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b">
+                    <h3 class="font-black text-xl text-slate-800">إدارة المحتوى الكاملة</h3>
+                    <button onclick="admin.nuke()" class="text-red-500 font-bold border border-red-200 px-3 py-1 rounded-xl text-xs hover:bg-red-50">حذف المصنع ⚠️</button>
+                </div>
+                <div id="admin-tree" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
 
-    <div id="password-modal" class="fixed inset-0 bg-slate-900/95 backdrop-blur hidden z-[100] flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm text-center shadow-2xl modal-animate">
-            <i class="fas fa-lock text-4xl text-emerald-500 mb-4"></i>
-            <h3 class="text-2xl font-black mb-2">منطقة المشتركين</h3>
-            <p class="text-slate-500 text-sm mb-6 font-bold">أدخل كود الاشتراك لفتح المحتوى</p>
-            <input type="password" id="user-pass" class="w-full border-2 border-slate-200 p-4 rounded-xl text-center text-2xl font-black mb-4 outline-none focus:border-emerald-500">
-            <button onclick="app.checkPassword()" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black shadow-lg">تفعيل</button>
-            <button onclick="document.getElementById('password-modal').classList.add('hidden')" class="mt-4 text-slate-400 font-bold text-sm">إلغاء</button>
+    <div id="edit-q-modal" class="fixed inset-0 bg-slate-900/95 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-[2rem] w-full max-w-lg space-y-4 shadow-2xl">
+            <h3 class="font-black text-xl text-center">تعديل السؤال</h3>
+            <input type="hidden" id="edit-qid"><input type="hidden" id="edit-idx">
+            <textarea id="eq-text" class="w-full border p-4 rounded-xl h-28 font-bold text-lg"></textarea>
+            <div class="grid grid-cols-2 gap-3">
+                <input id="eq-o0" class="border p-3 rounded-lg font-bold"><input id="eq-o1" class="border p-3 rounded-lg font-bold">
+                <input id="eq-o2" class="border p-3 rounded-lg font-bold"><input id="eq-o3" class="border p-3 rounded-lg font-bold">
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold whitespace-nowrap">رقم الإجابة (0-3):</label>
+                <input id="eq-ans" type="number" class="w-20 border p-2 rounded-lg text-center font-bold">
+            </div>
+            <div class="flex gap-2 pt-4">
+                <button onclick="admin.saveQuestionEdit()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-black shadow">حفظ</button>
+                <button onclick="document.getElementById('edit-q-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold">إلغاء</button>
+            </div>
         </div>
     </div>
 
@@ -180,177 +216,239 @@
             appId: "1:129365723816:web:be1fb88079c9a38ac2d09d"
         };
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const dbRef = firebase.database().ref('edu_platform_data');
         let db = { quizzes: [], files: [], simulations: [], settings: {} };
-        let state = { isVIP: false, major: '', minor: '', quiz: null, score: 0, qIdx: 0, timerInterval: null };
 
         const app = {
+            login: () => {
+                const e = document.getElementById('adm-email').value, p = document.getElementById('adm-pass').value;
+                if(!e||!p) return alert("البيانات ناقصة");
+                firebase.auth().signInWithEmailAndPassword(e,p).then(()=>location.reload()).catch(err=>alert(err.message));
+            },
+            logout: () => firebase.auth().signOut().then(()=>location.reload()),
             init: () => {
-                database.ref('edu_platform_data').on('value', snap => {
-                    document.getElementById('loading').classList.add('hidden');
-                    if(snap.val()) db = snap.val();
-                    app.renderUI();
+                firebase.auth().onAuthStateChanged(user => {
+                    if(user) {
+                        document.getElementById('login-view').classList.add('hidden');
+                        document.getElementById('panel-view').classList.remove('hidden');
+                        document.querySelector('.id-logout').classList.remove('hidden');
+                        dbRef.on('value', snap => {
+                            if(snap.val()) db = snap.val();
+                            admin.loadSettings();
+                            admin.updateDropdowns();
+                            admin.renderTree();
+                        });
+                    }
+                });
+            }
+        };
+
+        const admin = {
+            switchTab: (t) => {
+                document.querySelectorAll('.adm-tab').forEach(e=>e.classList.remove('active'));
+                document.getElementById('tab-'+t).classList.add('active');
+                document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));
+                event.target.classList.add('active');
+            },
+            loadSettings: () => {
+                const s = db.settings || {};
+                const ids = ['set-site-name', 'set-hero-title', 'set-hero-desc', 'set-whatsapp', 'set-access-code', 'set-footer-text', 'set-tutorial', 'set-ext-link-url', 'set-ext-link-text', 'set-app-link', 'set-app-text', 'set-btn-visitor', 'set-btn-sub'];
+                ids.forEach(id => { 
+                    const k = id.replace('set-','').replace(/-./g, x=>x[1].toUpperCase());
+                    // Special case for tutorial
+                    if(id === 'set-tutorial' && s.tutorialText) document.getElementById(id).value = s.tutorialText;
+                    else if(document.getElementById(id)) document.getElementById(id).value = s[k] || ""; 
                 });
             },
-            renderUI: () => {
-                const s = db.settings || {};
-                const els = {
-                    'ui-site-name': s.siteName, 'ui-hero-title': s.heroTitle, 'ui-hero-desc': s.heroDesc,
-                    'footer-text': s.footerText, 'phone-display': s.whatsapp, 'ui-app-text': s.appText,
-                    'ui-ext-text': s.extLinkText, 'ui-btn-vis': s.btnVisitor, 'ui-btn-sub': s.btnSub,
-                };
-                for(let k in els) if(document.getElementById(k)) document.getElementById(k).innerText = els[k] || "";
-                document.getElementById('phone-link').href = `https://wa.me/${s.whatsapp}`;
+            saveSettings: () => {
+                const s = {};
+                ['siteName','heroTitle','heroDesc','whatsapp','accessCode','footerText','tutorialText','extLinkUrl','extLinkText','appLink','appText','btnVisitor','btnSub'].forEach(k => {
+                    let id = 'set-' + k.replace(/[A-Z]/g, x => '-' + x.toLowerCase());
+                    if(k === 'tutorialText') id = 'set-tutorial';
+                    s[k] = document.getElementById(id).value;
+                });
+                db.settings = s; admin.save(); alert("تم الحفظ بنجاح");
+            },
+            addQuiz: () => {
+                const n = document.getElementById('new-quiz-name').value;
+                if(!n) return alert("الاسم مطلوب");
+                if(!db.quizzes) db.quizzes = [];
+                db.quizzes.push({
+                    id: Date.now(), name: n,
+                    mode: document.getElementById('adm-mode').value,
+                    major: document.getElementById('adm-major').value,
+                    minor: document.getElementById('adm-minor').value,
+                    questions: []
+                });
+                admin.save(); alert("تم إضافة الاختبار");
+            },
+            addManualQ: () => {
+                const qid = document.getElementById('adm-target-quiz').value;
+                const q = db.quizzes.find(x=>x.id==qid);
+                if(!q) return alert("اختر اختبار");
+                if(!q.questions) q.questions = [];
+                q.questions.push({
+                    text: document.getElementById('q-text').value,
+                    opts: [1,2,3,4].map(i=>document.getElementById('opt'+i).value),
+                    correctAnswer: [1,2,3,4].map(i=>document.getElementById('opt'+i).value).indexOf(document.getElementById('q-ans').value)
+                });
+                admin.save(); alert("تم إضافة السؤال");
+            },
+            processJSON: () => {
+                try {
+                    const data = JSON.parse(document.getElementById('json-input').value);
+                    const qid = document.getElementById('adm-target-quiz').value;
+                    const q = db.quizzes.find(x=>x.id==qid);
+                    if(!q.questions) q.questions = [];
+                    (Array.isArray(data)?data:[data]).forEach(i => q.questions.push({text:i.question, opts:i.options, correctAnswer:i.correctAnswer}));
+                    admin.save(); alert("تم الاستيراد");
+                } catch(e) { alert("خطأ في صيغة JSON"); }
+            },
+            addFile: () => {
+                if(!db.files) db.files = [];
+                db.files.push({
+                    id: Date.now(), name: document.getElementById('file-name').value,
+                    url: document.getElementById('file-url').value,
+                    mode: document.getElementById('file-mode').value,
+                    major: document.getElementById('file-major').value,
+                    minor: document.getElementById('file-minor').value
+                });
+                admin.save(); alert("تم إضافة الملف");
+            },
+            createSimulation: () => {
+                const name = document.getElementById('new-sim-name').value;
+                if(!name) return alert("اسم المحاكي مطلوب");
+                if(!db.simulations) db.simulations = [];
+                db.simulations.push({
+                    id: Date.now(),
+                    name: name,
+                    mode: document.getElementById('new-sim-mode').value,
+                    time: parseInt(document.getElementById('ns-time').value) || 60,
+                    counts: {
+                        spec: parseInt(document.getElementById('ns-spec').value)||0,
+                        ped: parseInt(document.getElementById('ns-ped').value)||0,
+                        comp: parseInt(document.getElementById('ns-comp').value)||0,
+                        iq: parseInt(document.getElementById('ns-iq').value)||0,
+                        ar: parseInt(document.getElementById('ns-ar').value)||0,
+                        en: parseInt(document.getElementById('ns-en').value)||0,
+                        gen: parseInt(document.getElementById('ns-gen').value)||0
+                    }
+                });
+                admin.save(); alert("تم إنشاء المحاكي الجديد");
+            },
+            renderTree: () => {
+                const t = document.getElementById('admin-tree'); t.innerHTML = "";
                 
-                // Fix for Tutorials Visibility
-                if(s.tutorialText && s.tutorialText.trim() !== "") {
-                    document.getElementById('ui-tutorial-box').classList.remove('hidden');
-                    document.getElementById('ui-tutorial-text').innerText = s.tutorialText;
-                } else {
-                    document.getElementById('ui-tutorial-box').classList.add('hidden');
-                }
-
-                if(s.extLinkUrl) { document.getElementById('ui-ext-link-area').classList.remove('hidden'); document.getElementById('ui-ext-link').href = s.extLinkUrl; }
-                if(s.appLink) { document.getElementById('app-banner').classList.remove('hidden'); document.getElementById('ui-app-link').href = s.appLink; }
-                
-                // Render Simulations List
-                const simList = document.getElementById('simulations-list');
-                simList.innerHTML = "";
+                // Simulations
                 if(db.simulations && db.simulations.length) {
-                    db.simulations.forEach(sim => {
-                        const locked = sim.mode === 'subscriber' && !state.isVIP;
-                        simList.innerHTML += `
-                        <div onclick="app.startSimulation(${sim.id}, ${locked})" class="w-full bg-slate-800 text-white p-5 rounded-[2rem] shadow-lg border-l-8 border-yellow-400 cursor-pointer hover:-translate-y-1 transition-all ${locked?'locked-item':''}">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <i class="fas fa-stopwatch text-3xl text-yellow-400"></i>
-                                    <div><h3 class="text-xl font-black">${sim.name}</h3><p class="text-xs text-slate-400 font-bold">${sim.time} دقيقة</p></div>
-                                </div>
-                                <i class="fas ${locked?'fa-lock text-red-500':'fa-play text-green-400'} text-xl"></i>
+                    t.innerHTML += `<h4 class="font-bold text-slate-800 border-b pb-2 mb-2">⚡ المحاكيات:</h4>`;
+                    db.simulations.forEach(s => {
+                        const locked = s.mode === 'subscriber';
+                        t.innerHTML += `
+                        <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-2 flex justify-between items-center">
+                            <div><span class="text-xs font-bold ${locked?'text-red-500':'text-green-500'}">[ ${locked?'مغلق':'مفتوح'} ]</span> <span class="font-bold">${s.name}</span></div>
+                            <div class="flex gap-2">
+                                <button onclick="admin.toggleLock('sim', ${s.id})" class="text-xs bg-white px-2 py-1 rounded border hover:bg-slate-100">${locked?'🔓 فتح':'🔒 قفل'}</button>
+                                <button onclick="admin.delItem('sim', ${s.id})" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded border border-red-200 hover:bg-red-200">حذف</button>
                             </div>
                         </div>`;
                     });
                 }
-                app.showSection('landing');
-            },
-            showSection: (id) => { document.querySelectorAll('.view-section').forEach(e=>e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); window.scrollTo(0,0); },
-            enterVisitor: () => { state.isVIP = false; app.updateStatus(); app.showSection('dashboard'); },
-            enterSubscriber: () => document.getElementById('password-modal').classList.remove('hidden'),
-            checkPassword: () => {
-                if(document.getElementById('user-pass').value === (db.settings.accessCode || "123")) {
-                    state.isVIP = true; document.getElementById('password-modal').classList.add('hidden');
-                    app.updateStatus(); alert("تم التفعيل ✅"); app.showSection('dashboard');
-                    if(!document.getElementById('content-list').classList.contains('hidden')) app.selectMinor(state.minor);
-                    app.renderUI(); 
-                } else alert("كود خطأ");
-            },
-            updateStatus: () => document.getElementById('user-status').innerText = state.isVIP ? "مشترك VIP 👑" : "زائر (محدود)",
-            selectMajor: (m) => { state.major = m; if(m==='Competition') app.selectMinor('ملفات'); else app.showSection('sub-dashboard'); },
-            selectMinor: (m) => {
-                state.minor = m;
-                document.getElementById('list-title').innerText = m === 'تخصص' ? `تخصص ${state.major}` : m;
-                const isUniversal = ['تربوي', 'جدارات', 'IQ', 'عربي للجميع', 'انجليزي للجميع', 'معلومات عامة'].includes(m);
                 
-                // FILES
-                const files = (db.files||[]).filter(f => {
-                    if(state.major==='Competition') return f.major==='Competition';
-                    if(isUniversal) return f.minor===m;
-                    return f.major===state.major && f.minor===m;
+                // Quizzes
+                t.innerHTML += `<h4 class="font-bold text-slate-800 border-b pb-2 mb-2 mt-4">📘 الاختبارات:</h4>`;
+                (db.quizzes || []).forEach(q => {
+                    const locked = q.mode === 'subscriber';
+                    t.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl border mb-2 shadow-sm">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold ${locked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} px-2 py-1 rounded-lg">${locked?'مغلق':'مفتوح'}</span>
+                                <h5 class="font-bold text-slate-800">${q.name} <span class="text-xs text-slate-400">(${q.major} > ${q.minor})</span></h5>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="admin.toggleQs(${q.id})" class="text-xs bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-bold border border-blue-100 hover:bg-blue-100">الأسئلة (${q.questions?.length||0})</button>
+                                <button onclick="admin.toggleLock('quiz', ${q.id})" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold hover:bg-slate-200">${locked?'🔓 فتح':'🔒 قفل'}</button>
+                                <button onclick="admin.delItem('quiz', ${q.id})" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg font-bold hover:bg-red-100">حذف</button>
+                            </div>
+                        </div>
+                        <div id="qs-${q.id}" class="hidden mt-4 pt-4 border-t space-y-2 bg-slate-50 p-2 rounded-lg">
+                            ${(q.questions||[]).map((sq, i) => `
+                                <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100 shadow-sm">
+                                    <span class="text-xs font-bold text-slate-600 truncate w-3/4">${i+1}. ${sq.text}</span>
+                                    <div class="flex gap-1">
+                                        <button onclick="admin.editQ(${q.id}, ${i})" class="text-xs text-emerald-500 p-1 hover:bg-emerald-50 rounded"><i class="fas fa-edit"></i></button>
+                                        <button onclick="admin.delQ(${q.id}, ${i})" class="text-xs text-red-500 p-1 hover:bg-red-50 rounded"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>`;
                 });
-                const fBox = document.getElementById('files-box');
-                if(files.length) {
-                    fBox.classList.remove('hidden');
-                    document.getElementById('files-grid').innerHTML = files.map(f => {
-                        const locked = f.mode === 'subscriber' && !state.isVIP;
-                        return `<div onclick="app.openFile('${f.url}', ${locked})" class="bg-white p-5 rounded-2xl shadow flex justify-between items-center cursor-pointer ${locked?'locked-item':''}"><div class="flex items-center gap-2"><i class="fas fa-file-pdf text-red-500"></i> <span class="font-bold text-sm">${f.name}</span></div><i class="fas ${locked?'fa-lock text-slate-400':'fa-download text-slate-300'}"></i></div>`;
-                    }).join('');
-                } else fBox.classList.add('hidden');
 
-                // QUIZZES
-                const qBox = document.getElementById('quizzes-box');
-                if(state.major==='Competition') qBox.classList.add('hidden');
-                else {
-                    const quizzes = (db.quizzes||[]).filter(q => {
-                        if(isUniversal) return q.minor===m;
-                        return q.major===state.major && q.minor===m;
+                // Files
+                if(db.files && db.files.length) {
+                    t.innerHTML += `<h4 class="font-bold text-red-600 border-b pb-2 mb-2 mt-4">📂 الملفات:</h4>`;
+                    db.files.forEach(f => {
+                        const locked = f.mode === 'subscriber';
+                        t.innerHTML += `
+                        <div class="bg-white p-4 rounded-xl border-r-4 border-red-400 mb-2 flex justify-between items-center shadow-sm">
+                            <div>
+                                <span class="text-[10px] ${locked?'text-red-500':'text-green-500'} font-bold">[${locked?'مغلق':'مفتوح'}]</span>
+                                <span class="font-bold text-sm">${f.name}</span> <span class="text-xs text-slate-400">(${f.major})</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="admin.toggleLock('file', ${f.id})" class="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200">${locked?'🔓':'🔒'}</button>
+                                <button onclick="admin.delItem('file', ${f.id})" class="text-xs bg-red-50 text-red-500 px-2 py-1 rounded hover:bg-red-100">حذف</button>
+                            </div>
+                        </div>`;
                     });
-                    if(quizzes.length) {
-                        qBox.classList.remove('hidden');
-                        document.getElementById('quizzes-grid').innerHTML = quizzes.map(q => {
-                            const locked = q.mode === 'subscriber' && !state.isVIP;
-                            return `<div onclick="app.startQuiz(${q.id}, ${locked})" class="bg-white p-5 rounded-2xl shadow flex justify-between items-center cursor-pointer ${locked?'locked-item':''}"><div><h4 class="font-bold">${q.name}</h4><p class="text-[10px] text-slate-400 font-bold">${q.questions?.length||0} سؤال</p></div><i class="fas ${locked?'fa-lock text-red-500':'fa-play-circle text-blue-500'} text-2xl"></i></div>`;
-                        }).join('');
-                    } else {
-                        document.getElementById('quizzes-grid').innerHTML = '<p class="text-center text-slate-400 font-bold">لا يوجد محتوى</p>';
-                        qBox.classList.remove('hidden');
-                    }
                 }
-                app.showSection('content-list');
             },
-            openFile: (url, locked) => locked ? document.getElementById('password-modal').classList.remove('hidden') : window.open(url, '_blank'),
-            startQuiz: (id, locked) => {
-                if(locked) return document.getElementById('password-modal').classList.remove('hidden');
-                const q = db.quizzes.find(x => x.id === id);
-                if(!q.questions || !q.questions.length) return alert("فارغ");
-                state.quiz = q; state.score = 0; state.qIdx = 0;
-                document.getElementById('timer-display').classList.add('hidden');
-                app.showSection('exam-player'); app.renderQ();
+            toggleQs: (id) => document.getElementById('qs-'+id).classList.toggle('hidden'),
+            toggleLock: (type, id) => {
+                let list = type==='quiz'?db.quizzes : type==='file'?db.files : db.simulations;
+                let item = list.find(x=>x.id===id);
+                item.mode = item.mode==='visitor'?'subscriber':'visitor';
+                admin.save();
             },
-            startSimulation: (id, locked) => {
-                if(locked) return document.getElementById('password-modal').classList.remove('hidden');
-                const sim = db.simulations.find(x => x.id === id);
-                if(!sim) return;
-                
-                let pool = { 'تخصص':[], 'تربوي':[], 'جدارات':[], 'IQ':[], 'عربي للجميع':[], 'انجليزي للجميع':[], 'معلومات عامة':[] };
-                (db.quizzes||[]).forEach(q => {
-                    if(q.questions && q.questions.length) {
-                        if(pool[q.minor]) pool[q.minor].push(...q.questions);
-                        else pool['تخصص'].push(...q.questions);
-                    }
-                });
-                
-                const shuffle = arr => arr.sort(() => 0.5 - Math.random());
-                let finalQs = [];
-                ['spec','ped','comp','iq','ar','en','gen'].forEach(k => {
-                    const key = {'spec':'تخصص','ped':'تربوي','comp':'جدارات','iq':'IQ','ar':'عربي للجميع','en':'انجليزي للجميع','gen':'معلومات عامة'}[k];
-                    if(pool[key]) finalQs.push(...shuffle(pool[key]).slice(0, sim.counts[k]||0));
-                });
-                
-                if(!finalQs.length) return alert("لا توجد أسئلة كافية");
-                state.quiz = { questions: shuffle(finalQs) }; state.score = 0; state.qIdx = 0;
-                app.startTimer(sim.time);
-                app.showSection('exam-player'); app.renderQ();
+            editQ: (qid, idx) => {
+                const q = db.quizzes.find(x=>x.id==qid).questions[idx];
+                document.getElementById('edit-qid').value = qid; document.getElementById('edit-idx').value = idx;
+                document.getElementById('eq-text').value = q.text;
+                [0,1,2,3].forEach(i => document.getElementById('eq-o'+i).value = q.opts[i]);
+                document.getElementById('eq-ans').value = q.correctAnswer;
+                document.getElementById('edit-q-modal').classList.remove('hidden');
             },
-            startTimer: (min) => {
-                const d = document.getElementById('timer-display'); d.classList.remove('hidden');
-                let t = min * 60;
-                if(state.timerInterval) clearInterval(state.timerInterval);
-                state.timerInterval = setInterval(() => {
-                    d.innerText = `${Math.floor(t/60)}:${t%60<10?'0'+t%60:t%60}`;
-                    if(t-- <= 0) { clearInterval(state.timerInterval); alert("انتهى الوقت"); app.finishExam(); }
-                }, 1000);
+            saveQuestionEdit: () => {
+                const qid = document.getElementById('edit-qid').value;
+                const idx = document.getElementById('edit-idx').value;
+                const q = db.quizzes.find(x=>x.id==qid);
+                q.questions[idx] = {
+                    text: document.getElementById('eq-text').value,
+                    opts: [0,1,2,3].map(i=>document.getElementById('eq-o'+i).value),
+                    correctAnswer: parseInt(document.getElementById('eq-ans').value)
+                };
+                admin.save();
+                document.getElementById('edit-q-modal').classList.add('hidden');
+                alert("تم التعديل بنجاح");
             },
-            renderQ: () => {
-                document.getElementById('question-box').classList.remove('hidden');
-                document.getElementById('result-box').classList.add('hidden');
-                const q = state.quiz.questions[state.qIdx];
-                document.getElementById('progress-text').innerText = `${state.qIdx+1}/${state.quiz.questions.length}`;
-                document.getElementById('progress-bar').style.width = ((state.qIdx+1)/state.quiz.questions.length*100)+"%";
-                document.getElementById('question-box').innerHTML = `<div class="bg-white p-6 rounded-[2.5rem] shadow-xl space-y-6"><h3 class="font-black text-xl leading-relaxed text-slate-800">${q.text}</h3><div class="grid gap-3">${q.opts.map((o,i)=>`<button onclick="app.ans(${i},this)" class="opt-btn">${o}</button>`).join('')}</div></div>`;
+            delItem: (type, id) => {
+                if(!confirm("تأكيد الحذف؟")) return;
+                if(type==='quiz') db.quizzes = db.quizzes.filter(x=>x.id!=id);
+                else if(type==='file') db.files = db.files.filter(x=>x.id!=id);
+                else db.simulations = db.simulations.filter(x=>x.id!=id);
+                admin.save();
             },
-            ans: (i, btn) => {
-                const q = state.quiz.questions[state.qIdx];
-                document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
-                if(i === parseInt(q.correctAnswer)) { btn.classList.add('correct'); state.score++; }
-                else { btn.classList.add('wrong'); document.querySelectorAll('.opt-btn')[parseInt(q.correctAnswer)].classList.add('correct'); }
-                setTimeout(() => { if(++state.qIdx < state.quiz.questions.length) app.renderQ(); else app.finishExam(); }, 1500);
+            delQ: (qid, idx) => {
+                if(!confirm("حذف السؤال نهائياً؟")) return;
+                const q = db.quizzes.find(x=>x.id==qid);
+                q.questions.splice(idx, 1);
+                admin.save();
             },
-            finishExam: () => {
-                if(state.timerInterval) clearInterval(state.timerInterval);
-                document.getElementById('question-box').classList.add('hidden');
-                document.getElementById('result-box').classList.remove('hidden');
-                document.getElementById('res-score').innerText = Math.round(state.score/state.quiz.questions.length*100)+"%";
-            }
+            updateDropdowns: () => document.getElementById('adm-target-quiz').innerHTML = (db.quizzes||[]).map(q=>`<option value="${q.id}">[${q.major}] ${q.name}</option>`).join(''),
+            nuke: () => { if(confirm("تحذير: هذا سيحذف كل شيء!")) { db={quizzes:[],files:[],simulations:[],settings:db.settings}; admin.save(); } },
+            save: () => dbRef.set(db)
         };
         app.init();
     </script>
