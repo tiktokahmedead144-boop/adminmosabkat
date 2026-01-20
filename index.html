@@ -21,6 +21,19 @@
         input:focus, textarea:focus, select:focus { border-color: #10b981; outline: none; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
         #toast-notification { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
         #toast-notification.show { transform: translateY(0); }
+        
+        /* تنسيق القوائم المنسدلة */
+        details { overflow: hidden; border-radius: 0.75rem; border: 1px solid #e2e8f0; margin-bottom: 1rem; background: white; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        details > summary { list-style: none; outline: none; cursor: pointer; padding: 1rem; font-weight: bold; background-color: #f8fafc; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s; }
+        details > summary:hover { background-color: #f1f5f9; }
+        details[open] > summary { background-color: #eff6ff; color: #1e3a8a; border-bottom: 1px solid #e2e8f0; }
+        details > summary::-webkit-details-marker { display: none; }
+        /* حركة السهم */
+        .arrow-icon { transition: transform 0.3s ease; }
+        details[open] .arrow-icon { transform: rotate(180deg); }
+        /* المحتوى الداخلي */
+        .details-content { padding: 1rem; background-color: white; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style> 
  </head> 
  <body class="pb-20 text-slate-800"> 
@@ -194,6 +207,15 @@
     </div> 
    </div> 
   </div> 
+  <div id="edit-quiz-name-modal" class="fixed inset-0 bg-slate-900/95 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-sm"> 
+   <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm space-y-4 shadow-2xl"> 
+    <h3 class="font-black text-xl text-center text-blue-800">تغيير اسم الاختبار</h3> 
+    <input type="hidden" id="edit-name-qid"> 
+    <input id="new-quiz-name-input" type="text" class="w-full border-2 border-blue-200 p-4 rounded-xl font-bold text-lg text-center focus:border-blue-500" placeholder="الاسم الجديد"> 
+    <div class="flex gap-2 pt-2"> <button onclick="admin.saveQuizName()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black shadow hover:bg-blue-700">تحديث الاسم</button> <button onclick="document.getElementById('edit-quiz-name-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold hover:bg-slate-200">إلغاء</button> 
+    </div> 
+   </div> 
+  </div> 
   <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDvFOWeYV2grWux_Z-nl3uFiTR2Jd9UlvE",
@@ -323,7 +345,7 @@
                     id: Date.now(),
                     name: name,
                     mode: document.getElementById('new-sim-mode').value,
-                    targetMajor: document.getElementById('new-sim-major').value, // حفظ التخصص المختار
+                    targetMajor: document.getElementById('new-sim-major').value, 
                     time: parseInt(document.getElementById('ns-time').value) || 60,
                     counts: {
                         spec: parseInt(document.getElementById('ns-spec').value)||0,
@@ -337,15 +359,32 @@
                 });
                 admin.save(); app.notify("تم إنشاء المحاكي");
             },
+            
+            // ============== الدالة المصححة بالكامل ==============
             renderTree: () => {
-                const t = document.getElementById('admin-tree'); t.innerHTML = "";
-                
+                const t = document.getElementById('admin-tree'); 
+                // نستخدم متغير لتجميع كل الـ HTML بداخله أولاً لتجنب مشاكل الإغلاق التلقائي
+                let fullHtml = "";
+
+                // 1. المحاكيات
                 if(db.simulations && db.simulations.length) {
-                    t.innerHTML += `<h4 class="font-bold text-slate-800 border-b pb-2 mb-2">⚡ المحاكيات:</h4>`;
+                    fullHtml += `
+                    <details>
+                        <summary>
+                            <span class="text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-bolt text-yellow-500"></i> المحاكيات
+                            </span>
+                            <div class="flex items-center gap-3">
+                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">${db.simulations.length}</span>
+                                <i class="fas fa-chevron-down arrow-icon text-slate-400"></i>
+                            </div>
+                        </summary>
+                        <div class="details-content space-y-2">`;
+                    
                     db.simulations.forEach(s => {
                         const locked = s.mode === 'subscriber';
-                        t.innerHTML += `
-                        <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-2 flex justify-between items-center">
+                        fullHtml += `
+                        <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200 flex justify-between items-center">
                             <div>
                                 <span class="text-xs font-bold ${locked?'text-red-500':'text-green-500'}">[ ${locked?'مغلق':'مفتوح'} ]</span> 
                                 <span class="font-bold">${s.name}</span>
@@ -357,44 +396,91 @@
                             </div>
                         </div>`;
                     });
+                    
+                    fullHtml += `</div></details>`;
                 }
                 
-                t.innerHTML += `<h4 class="font-bold text-slate-800 border-b pb-2 mb-2 mt-4">📘 الاختبارات:</h4>`;
-                (db.quizzes || []).forEach(q => {
-                    const locked = q.mode === 'subscriber';
-                    t.innerHTML += `
-                    <div class="bg-white p-4 rounded-xl border mb-2 shadow-sm">
-                        <div class="flex flex-col md:flex-row justify-between items-center gap-2">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-bold ${locked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} px-2 py-1 rounded-lg">${locked?'مغلق':'مفتوح'}</span>
-                                <h5 class="font-bold text-slate-800">${q.name} <span class="text-xs text-slate-400">(${q.major} > ${q.minor})</span></h5>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="admin.toggleQs(${q.id})" class="text-xs bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-bold border border-blue-100 hover:bg-blue-100">الأسئلة (${q.questions?.length||0})</button>
-                                <button onclick="admin.toggleLock('quiz', ${q.id})" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold hover:bg-slate-200">${locked?'🔓 فتح':'🔒 قفل'}</button>
-                                <button onclick="admin.delItem('quiz', ${q.id})" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg font-bold hover:bg-red-100">حذف</button>
-                            </div>
-                        </div>
-                        <div id="qs-${q.id}" class="hidden mt-4 pt-4 border-t space-y-2 bg-slate-50 p-2 rounded-lg">
-                            ${(q.questions||[]).map((sq, i) => `
-                                <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100 shadow-sm">
+                // 2. الاختبارات (مقسمة)
+                const quizzes = db.quizzes || [];
+                if (quizzes.length) {
+                    fullHtml += `<h4 class="font-black text-xl text-slate-800 mb-4 mt-6 border-b pb-2 flex items-center gap-2"><i class="fas fa-book text-blue-600"></i> الاختبارات</h4>`;
+                    const majors = [...new Set(quizzes.map(q => q.major || 'غير محدد'))].sort();
+
+                    majors.forEach(major => {
+                        const majorQuizzes = quizzes.filter(q => (q.major || 'غير محدد') === major);
+                        
+                        fullHtml += `
+                        <details>
+                            <summary>
+                                <span class="text-slate-700 flex items-center gap-2">
+                                    <i class="fas fa-folder text-blue-500"></i> ${major}
+                                </span>
+                                <div class="flex items-center gap-3">
+                                    <span class="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full">${majorQuizzes.length}</span>
+                                    <i class="fas fa-chevron-down arrow-icon text-slate-400"></i>
+                                </div>
+                            </summary>
+                            <div class="details-content space-y-3">`;
+
+                        majorQuizzes.forEach(q => {
+                            const locked = q.mode === 'subscriber';
+                            // بناء قائمة الأسئلة (مخفية افتراضياً)
+                            let questionsHtml = '';
+                            (q.questions || []).forEach((sq, i) => {
+                                questionsHtml += `
+                                <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100 shadow-sm mt-1">
                                     <span class="text-xs font-bold text-slate-600 truncate w-3/4">${i+1}. ${sq.text}</span>
                                     <div class="flex gap-1">
                                         <button onclick="admin.editQ(${q.id}, ${i})" class="text-xs text-emerald-500 p-1 hover:bg-emerald-50 rounded"><i class="fas fa-edit"></i></button>
                                         <button onclick="admin.delQ(${q.id}, ${i})" class="text-xs text-red-500 p-1 hover:bg-red-50 rounded"><i class="fas fa-trash"></i></button>
                                     </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>`;
-                });
+                                </div>`;
+                            });
 
+                            fullHtml += `
+                            <div class="bg-white p-3 rounded-lg border shadow-sm">
+                                <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] font-bold ${locked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} px-2 py-1 rounded-lg">${locked?'مغلق':'مفتوح'}</span>
+                                        <h5 class="font-bold text-slate-800">${q.name} <span class="text-xs text-slate-400">(${q.minor})</span></h5>
+                                        <button onclick="admin.openRenameModal(${q.id})" class="text-slate-400 hover:text-blue-600 transition-colors" title="تعديل الاسم"><i class="fas fa-pen text-xs"></i></button>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="admin.toggleQs(${q.id})" class="text-xs bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-bold border border-blue-100 hover:bg-blue-100">الأسئلة (${q.questions?.length||0})</button>
+                                        <button onclick="admin.toggleLock('quiz', ${q.id})" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold hover:bg-slate-200">${locked?'🔓 فتح':'🔒 قفل'}</button>
+                                        <button onclick="admin.delItem('quiz', ${q.id})" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg font-bold hover:bg-red-100">حذف</button>
+                                    </div>
+                                </div>
+                                <div id="qs-${q.id}" class="hidden mt-4 pt-4 border-t space-y-2 bg-slate-50 p-2 rounded-lg">
+                                    ${questionsHtml}
+                                </div>
+                            </div>`;
+                        });
+                        
+                        fullHtml += `</div></details>`;
+                    });
+                }
+
+                // 3. الملفات
                 if(db.files && db.files.length) {
-                    t.innerHTML += `<h4 class="font-bold text-red-600 border-b pb-2 mb-2 mt-4">📂 الملفات:</h4>`;
+                    fullHtml += `
+                    <h4 class="font-black text-xl text-slate-800 mb-4 mt-6 border-b pb-2 flex items-center gap-2"><i class="fas fa-file-pdf text-red-600"></i> الملفات</h4>
+                    <details>
+                        <summary>
+                            <span class="text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-folder-open text-red-500"></i> أرشيف الملفات
+                            </span>
+                            <div class="flex items-center gap-3">
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">${db.files.length}</span>
+                                <i class="fas fa-chevron-down arrow-icon text-slate-400"></i>
+                            </div>
+                        </summary>
+                        <div class="details-content space-y-2">`;
+                    
                     db.files.forEach(f => {
                         const locked = f.mode === 'subscriber';
-                        t.innerHTML += `
-                        <div class="bg-white p-4 rounded-xl border-r-4 border-red-400 mb-2 flex justify-between items-center shadow-sm">
+                        fullHtml += `
+                        <div class="bg-white p-4 rounded-xl border-r-4 border-red-400 flex justify-between items-center shadow-sm">
                             <div>
                                 <span class="text-[10px] ${locked?'text-red-500':'text-green-500'} font-bold">[${locked?'مغلق':'مفتوح'}]</span>
                                 <span class="font-bold text-sm">${f.name}</span> <span class="text-xs text-slate-400">(${f.major})</span>
@@ -405,7 +491,12 @@
                             </div>
                         </div>`;
                     });
+
+                    fullHtml += `</div></details>`;
                 }
+
+                // ضع الـ HTML كله مرة واحدة في الصفحة
+                t.innerHTML = fullHtml;
             },
             toggleQs: (id) => document.getElementById('qs-'+id).classList.toggle('hidden'),
             toggleLock: (type, id) => {
@@ -413,6 +504,23 @@
                 let item = list.find(x=>x.id===id);
                 item.mode = item.mode==='visitor'?'subscriber':'visitor';
                 admin.save();
+            },
+            openRenameModal: (qid) => {
+                const q = db.quizzes.find(x=>x.id==qid);
+                document.getElementById('edit-name-qid').value = qid;
+                document.getElementById('new-quiz-name-input').value = q.name;
+                document.getElementById('edit-quiz-name-modal').classList.remove('hidden');
+            },
+            saveQuizName: () => {
+                const qid = document.getElementById('edit-name-qid').value;
+                const newName = document.getElementById('new-quiz-name-input').value;
+                if(!newName) return app.notify("الاسم لا يمكن أن يكون فارغاً", "error");
+                
+                const q = db.quizzes.find(x=>x.id==qid);
+                q.name = newName;
+                admin.save();
+                document.getElementById('edit-quiz-name-modal').classList.add('hidden');
+                app.notify("تم تحديث اسم الاختبار");
             },
             editQ: (qid, idx) => {
                 const q = db.quizzes.find(x=>x.id==qid).questions[idx];
