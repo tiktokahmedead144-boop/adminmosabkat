@@ -21,17 +21,11 @@
         input:focus, textarea:focus, select:focus { border-color: #10b981; outline: none; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
         #toast-notification { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
         #toast-notification.show { transform: translateY(0); }
-        
-        /* تنسيق القوائم المنسدلة */
         details { overflow: hidden; border-radius: 0.75rem; border: 1px solid #e2e8f0; margin-bottom: 1rem; background: white; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
-        details > summary { list-style: none; outline: none; cursor: pointer; padding: 1rem; font-weight: bold; background-color: #f8fafc; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s; }
-        details > summary:hover { background-color: #f1f5f9; }
+        details > summary { list-style: none; outline: none; cursor: pointer; padding: 1rem; font-weight: bold; background-color: #f8fafc; display: flex; justify-content: space-between; align-items: center; }
         details[open] > summary { background-color: #eff6ff; color: #1e3a8a; border-bottom: 1px solid #e2e8f0; }
-        details > summary::-webkit-details-marker { display: none; }
-        /* حركة السهم */
         .arrow-icon { transition: transform 0.3s ease; }
         details[open] .arrow-icon { transform: rotate(180deg); }
-        /* المحتوى الداخلي */
         .details-content { padding: 1rem; background-color: white; animation: slideDown 0.3s ease-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style> 
@@ -111,7 +105,7 @@
     <div id="tab-create" class="adm-tab space-y-6"> 
      <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-blue-600"> 
       <h4 class="font-black text-lg mb-4 text-blue-800">1. إنشاء اختبار جديد</h4> 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"> <select id="adm-mode" class="w-full border p-3 rounded-xl font-bold bg-slate-50"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select> <select id="adm-major" class="w-full border p-3 rounded-xl font-bold bg-slate-50"> <option value="Universal">عام</option><option value="Competition">مسابقات</option> <option value="لغة عربية">لغة عربية</option><option value="رياضيات">رياضيات</option> <option value="علوم">علوم</option><option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option> </select> <select id="adm-minor" class="w-full border p-3 rounded-xl font-bold bg-slate-50"> <option value="تخصص">أسئلة التخصص</option><option value="تربوي">تربوي</option> <option value="جدارات">جدارات</option><option value="IQ">IQ</option> <option value="عربي للجميع">عربي للجميع</option><option value="انجليزي للجميع">انجليزي للجميع</option> <option value="معلومات عامة">معلومات عامة</option> </select> 
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"> <select id="adm-mode" class="w-full border p-3 rounded-xl font-bold bg-slate-50"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select> <select id="adm-major" class="w-full border p-3 rounded-xl font-bold bg-slate-50"> <option value="Universal">عام</option><option value="Competition">مسابقات</option> <option value="لغة عربية">لغة عربية</option><option value="رياضيات">رياضيات</option> <option value="علوم">علوم</option><option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option> </select> <select id="adm-minor" class="w-full border p-3 rounded-xl font-bold bg-slate-50"> <option value="تخصص">أسئلة التخصص</option><option value="تربوي">تربوي</option> <option value="جدارات">جدارات</option><option value="IQ">IQ</option> <option value="عربي للجميع">عربي للجميع</option><option value="انجليزي للجميع">انجليزي للجميع</option> <option value="حاسب آلي">حاسب آلي</option> <option value="معلومات عامة">معلومات عامة</option> </select> 
       </div> 
       <div class="flex gap-2"> 
        <input id="new-quiz-name" placeholder="اسم الاختبار" class="flex-1 border-2 p-3 rounded-xl font-bold"> <button onclick="admin.addQuiz()" class="bg-blue-600 text-white px-6 rounded-xl font-black">إنشاء</button> 
@@ -136,7 +130,7 @@
      </div> 
      <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-red-600"> 
       <h4 class="font-black text-lg mb-4 text-red-700">3. إضافة ملفات</h4> 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"> <select id="file-mode" class="border p-3 rounded-xl font-bold"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select> <select id="file-major" class="border p-3 rounded-xl font-bold"> <option value="Competition">مسابقات</option><option value="لغة عربية">لغة عربية</option> <option value="رياضيات">رياضيات</option><option value="علوم">علوم</option> <option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option> </select> <select id="file-minor" class="border p-3 rounded-xl font-bold"><option value="ملفات">ملفات التخصص</option><option value="تربوي">تربوي</option></select> 
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"> <select id="file-mode" class="border p-3 rounded-xl font-bold"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select> <select id="file-major" class="border p-3 rounded-xl font-bold"> <option value="Competition">مسابقات</option><option value="لغة عربية">لغة عربية</option> <option value="رياضيات">رياضيات</option><option value="علوم">علوم</option> <option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option> </select> <select id="file-minor" class="border p-3 rounded-xl font-bold"><option value="ملفات">ملفات التخصص</option><option value="تربوي">تربوي</option> <option value="حاسب آلي">حاسب آلي</option> </select> 
       </div> 
       <input id="file-name" placeholder="اسم الملف" class="w-full border p-3 rounded-xl font-bold mb-2"> 
       <input id="file-url" placeholder="الرابط" class="w-full border p-3 rounded-xl font-bold mb-2 text-left" dir="ltr"> <button onclick="admin.addFile()" class="w-full bg-red-600 text-white py-3 rounded-xl font-black">حفظ الملف</button> 
@@ -172,6 +166,9 @@
       </div> 
       <div> <label class="text-[10px] font-bold block">إنجليزي</label> 
        <input type="number" id="ns-en" class="border p-2 w-full rounded-lg text-center" value="5"> 
+      </div> 
+      <div class="bg-blue-50 p-1 rounded-lg"> <label class="text-[10px] font-bold block text-blue-700">حاسب آلي</label> 
+       <input type="number" id="ns-cs" class="border-2 border-blue-200 p-2 w-full rounded-lg text-center font-bold" value="5"> 
       </div> 
       <div> <label class="text-[10px] font-bold block">معلومات</label> 
        <input type="number" id="ns-gen" class="border p-2 w-full rounded-lg text-center" value="5"> 
@@ -354,19 +351,16 @@
                         iq: parseInt(document.getElementById('ns-iq').value)||0,
                         ar: parseInt(document.getElementById('ns-ar').value)||0,
                         en: parseInt(document.getElementById('ns-en').value)||0,
+                        cs: parseInt(document.getElementById('ns-cs').value)||0, 
                         gen: parseInt(document.getElementById('ns-gen').value)||0
                     }
                 });
-                admin.save(); app.notify("تم إنشاء المحاكي");
+                admin.save(); app.notify("تم إنشاء المحاكي بنجاح");
             },
-            
-            // ============== الدالة المصححة بالكامل ==============
             renderTree: () => {
                 const t = document.getElementById('admin-tree'); 
-                // نستخدم متغير لتجميع كل الـ HTML بداخله أولاً لتجنب مشاكل الإغلاق التلقائي
                 let fullHtml = "";
 
-                // 1. المحاكيات
                 if(db.simulations && db.simulations.length) {
                     fullHtml += `
                     <details>
@@ -400,7 +394,6 @@
                     fullHtml += `</div></details>`;
                 }
                 
-                // 2. الاختبارات (مقسمة)
                 const quizzes = db.quizzes || [];
                 if (quizzes.length) {
                     fullHtml += `<h4 class="font-black text-xl text-slate-800 mb-4 mt-6 border-b pb-2 flex items-center gap-2"><i class="fas fa-book text-blue-600"></i> الاختبارات</h4>`;
@@ -408,7 +401,6 @@
 
                     majors.forEach(major => {
                         const majorQuizzes = quizzes.filter(q => (q.major || 'غير محدد') === major);
-                        
                         fullHtml += `
                         <details>
                             <summary>
@@ -424,7 +416,6 @@
 
                         majorQuizzes.forEach(q => {
                             const locked = q.mode === 'subscriber';
-                            // بناء قائمة الأسئلة (مخفية افتراضياً)
                             let questionsHtml = '';
                             (q.questions || []).forEach((sq, i) => {
                                 questionsHtml += `
@@ -456,12 +447,10 @@
                                 </div>
                             </div>`;
                         });
-                        
                         fullHtml += `</div></details>`;
                     });
                 }
 
-                // 3. الملفات
                 if(db.files && db.files.length) {
                     fullHtml += `
                     <h4 class="font-black text-xl text-slate-800 mb-4 mt-6 border-b pb-2 flex items-center gap-2"><i class="fas fa-file-pdf text-red-600"></i> الملفات</h4>
@@ -491,11 +480,8 @@
                             </div>
                         </div>`;
                     });
-
                     fullHtml += `</div></details>`;
                 }
-
-                // ضع الـ HTML كله مرة واحدة في الصفحة
                 t.innerHTML = fullHtml;
             },
             toggleQs: (id) => document.getElementById('qs-'+id).classList.toggle('hidden'),
@@ -515,7 +501,6 @@
                 const qid = document.getElementById('edit-name-qid').value;
                 const newName = document.getElementById('new-quiz-name-input').value;
                 if(!newName) return app.notify("الاسم لا يمكن أن يكون فارغاً", "error");
-                
                 const q = db.quizzes.find(x=>x.id==qid);
                 q.name = newName;
                 admin.save();
