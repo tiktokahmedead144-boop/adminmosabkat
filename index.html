@@ -1,16 +1,33 @@
 <!doctype html>
-<html lang="ar" dir="rtl"> 
- <head> 
-  <meta charset="UTF-8"> 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-  <title>لوحة القيادة | أ. أحمد عيد</title> 
-  <script src="https://cdn.tailwindcss.com"></script> 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script> 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script> 
-  <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة القيادة | أ. أحمد عيد</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&amp;display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
         body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .adm-tab { display: none; }
@@ -28,192 +45,219 @@
         details[open] .arrow-icon { transform: rotate(180deg); }
         .details-content { padding: 1rem; background-color: white; animation: slideDown 0.3s ease-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    </style> 
- </head> 
- <body class="pb-20 text-slate-800"> 
-  <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold min-w-[300px] justify-center"> <i id="toast-icon" class="text-xl"></i> <span id="toast-msg"></span> 
-  </div> 
-  <nav class="bg-slate-900 text-white p-4 shadow-xl sticky top-0 z-50 border-b-4 border-emerald-500"> 
-   <div class="container mx-auto flex justify-between items-center"> 
-    <h1 class="text-xl font-black flex items-center gap-2"> <i class="fas fa-sliders-h text-emerald-400"></i> لوحة الإدارة </h1> <button onclick="app.logout()" class="hidden id-logout bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl font-bold text-xs transition-all">خروج</button> 
-   </div> 
-  </nav> 
-  <div class="container mx-auto px-4 py-8"> 
-   <div id="login-view" class="max-w-md mx-auto bg-white p-10 rounded-[2.5rem] shadow-2xl mt-12 text-center border-t-8 border-slate-900"> 
-    <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6"> <i class="fas fa-user-lock text-3xl text-slate-800"></i> 
-    </div> 
-    <h2 class="text-3xl font-black mb-8">تسجيل دخول المدير</h2> 
-    <div class="space-y-4"> 
-     <input type="email" id="adm-email" placeholder="البريد الإلكتروني" class="w-full border-2 p-4 rounded-2xl font-bold"> 
-     <input type="password" id="adm-pass" placeholder="كلمة المرور" class="w-full border-2 p-4 rounded-2xl font-bold"> <button onclick="app.login()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-black transition-all">دخول آمن</button> 
-    </div> 
-   </div> 
-   <div id="panel-view" class="hidden space-y-8"> 
-    <div class="flex gap-3 overflow-x-auto pb-4 no-scrollbar justify-center"> <button onclick="admin.switchTab('settings')" class="tab-btn active bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow">🛠️ الإعدادات</button> <button onclick="admin.switchTab('create')" class="tab-btn bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow">📝 إنشاء محتوى</button> <button onclick="admin.switchTab('simulation')" class="tab-btn bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow border-2 border-yellow-200">⚙️ إنشاء محاكي</button> <button onclick="admin.switchTab('manage')" class="tab-btn bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow">🗂️ إدارة وتعديل</button> 
-    </div> 
-    <div id="tab-settings" class="adm-tab active block bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100"> 
-     <h3 class="font-black text-xl mb-6 text-emerald-700 border-r-4 border-emerald-500 pr-3">إعدادات النصوص والروابط</h3> 
-     <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> 
-      <div class="bg-slate-50 p-5 rounded-3xl space-y-3"> 
-       <h4 class="font-bold text-slate-800 mb-2">البيانات الأساسية</h4> 
-       <div> <label class="text-[10px] font-bold text-slate-400">اسم المنصة:</label> 
-        <input id="set-site-name" class="w-full border p-2 rounded-xl font-bold"> 
-       </div> 
-       <div> <label class="text-[10px] font-bold text-slate-400">العنوان الرئيسي (Hero):</label> 
-        <input id="set-hero-title" class="w-full border p-2 rounded-xl font-bold"> 
-       </div> 
-       <div> <label class="text-[10px] font-bold text-slate-400">الوصف:</label> 
-        <input id="set-hero-desc" class="w-full border p-2 rounded-xl font-bold"> 
-       </div> 
-       <div> <label class="text-[10px] font-bold text-yellow-600">كود المشتركين (Password):</label> 
-        <input id="set-access-code" class="w-full border p-2 rounded-xl bg-yellow-50 font-black text-center text-lg"> 
-       </div> 
-      </div> 
-      <div class="bg-slate-50 p-5 rounded-3xl space-y-3"> 
-       <h4 class="font-bold text-slate-800 mb-2">الأزرار والتواصل</h4> 
-       <div> <label class="text-[10px] font-bold text-slate-400">واتساب:</label> 
-        <input id="set-whatsapp" class="w-full border p-2 rounded-xl font-bold"> 
-       </div> 
-       <div> <label class="text-[10px] font-bold text-slate-400">نص الفوتر:</label> 
-        <input id="set-footer-text" class="w-full border p-2 rounded-xl font-bold"> 
-       </div> 
-       <div class="grid grid-cols-2 gap-2"> 
-        <div> <label class="text-[10px] font-bold text-slate-400">زر الزوار:</label> 
-         <input id="set-btn-visitor" class="w-full border p-2 rounded-xl font-bold"> 
-        </div> 
-        <div> <label class="text-[10px] font-bold text-slate-400">زر المشتركين:</label> 
-         <input id="set-btn-sub" class="w-full border p-2 rounded-xl font-bold"> 
-        </div> 
-       </div> 
-      </div> 
-     </div> 
-     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6"> 
-      <div class="bg-slate-800 p-5 rounded-3xl space-y-2 text-white"> 
-       <h4 class="font-bold text-yellow-400">الرابط الخارجي</h4> 
-       <input id="set-ext-link-url" placeholder="URL" class="w-full bg-slate-700 border-none p-2 rounded-xl text-xs"> 
-       <input id="set-ext-link-text" placeholder="النص" class="w-full bg-slate-700 border-none p-2 rounded-xl text-xs"> 
-      </div> 
-      <div class="bg-blue-50 p-5 rounded-3xl space-y-2"> 
-       <h4 class="font-bold text-blue-600">تطبيق الهاتف</h4> 
-       <input id="set-app-link" placeholder="رابط التحميل" class="w-full bg-white border p-2 rounded-xl text-xs"> 
-       <input id="set-app-text" placeholder="نص البنر" class="w-full bg-white border p-2 rounded-xl text-xs"> 
-      </div> 
-     </div> 
-     <div class="mt-6"> <label class="text-xs font-bold text-slate-400">تعليمات الصفحة الرئيسية:</label> <textarea id="set-tutorial" class="w-full border p-3 rounded-2xl h-24 font-bold bg-slate-50 text-slate-700"></textarea> 
-     </div> <button onclick="admin.saveSettings()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl mt-6 font-black shadow-lg hover:bg-emerald-700 transition-all">حفظ الإعدادات ✅</button> 
-    </div> 
-    <div id="tab-create" class="adm-tab space-y-6"> 
-     <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-blue-600"> 
-      <h4 class="font-black text-lg mb-4 text-blue-800">1. إنشاء اختبار جديد</h4> 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"> <select id="adm-mode" class="w-full border p-3 rounded-xl font-bold bg-slate-50"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select> <select id="adm-major" class="w-full border p-3 rounded-xl font-bold bg-slate-50"> <option value="Universal">عام</option><option value="Competition">مسابقات</option> <option value="لغة عربية">لغة عربية</option><option value="رياضيات">رياضيات</option> <option value="علوم">علوم</option><option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option> </select> <select id="adm-minor" class="w-full border p-3 rounded-xl font-bold bg-slate-50"> <option value="تخصص">أسئلة التخصص</option><option value="تربوي">تربوي</option> <option value="جدارات">جدارات</option><option value="IQ">IQ</option> <option value="عربي للجميع">عربي للجميع</option><option value="انجليزي للجميع">انجليزي للجميع</option> <option value="حاسب آلي">حاسب آلي</option> <option value="معلومات عامة">معلومات عامة</option> </select> 
-      </div> 
-      <div class="flex gap-2"> 
-       <input id="new-quiz-name" placeholder="اسم الاختبار" class="flex-1 border-2 p-3 rounded-xl font-bold"> <button onclick="admin.addQuiz()" class="bg-blue-600 text-white px-6 rounded-xl font-black">إنشاء</button> 
-      </div> 
-     </div> 
-     <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-purple-600"> 
-      <h4 class="font-black text-lg mb-4 text-purple-800">2. إضافة الأسئلة</h4> <select id="adm-target-quiz" class="w-full border-2 p-3 rounded-xl font-bold bg-purple-50 mb-4"></select> 
-      <div class="flex gap-2 mb-4"> <button onclick="document.getElementById('add-manual').classList.remove('hidden');document.getElementById('add-bulk').classList.add('hidden')" class="flex-1 bg-purple-600 text-white py-2 rounded-xl font-bold">يدوي</button> <button onclick="document.getElementById('add-bulk').classList.remove('hidden');document.getElementById('add-manual').classList.add('hidden')" class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-xl font-bold">مجمع (JSON)</button> 
-      </div> 
-      <div id="add-manual" class="space-y-3"> <textarea id="q-text" placeholder="نص السؤال" class="w-full border p-3 rounded-xl h-20 font-bold"></textarea> 
-       <div class="grid grid-cols-2 gap-2"> 
-        <input id="opt1" placeholder="أ" class="border p-2 rounded-lg font-bold"> 
-        <input id="opt2" placeholder="ب" class="border p-2 rounded-lg font-bold"> 
-        <input id="opt3" placeholder="ج" class="border p-2 rounded-lg font-bold"> 
-        <input id="opt4" placeholder="د" class="border p-2 rounded-lg font-bold"> 
-       </div> 
-       <input id="q-ans" placeholder="الإجابة الصحيحة" class="w-full border bg-emerald-50 p-3 rounded-xl font-bold text-center"> <button onclick="admin.addManualQ()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-black">حفظ السؤال</button> 
-      </div> 
-      <div id="add-bulk" class="hidden space-y-3"> 
-       <p class="text-[10px] font-bold text-slate-500">ضع الأسئلة داخل مصفوفة <code>[...]</code> وتأكد من الفواصل.</p> <textarea id="json-input" class="w-full bg-slate-900 text-green-400 font-mono p-4 rounded-xl h-32 text-xs" dir="ltr"></textarea> <button onclick="admin.processJSON()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-black">استيراد</button> 
-      </div> 
-     </div> 
-     <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-red-600"> 
-      <h4 class="font-black text-lg mb-4 text-red-700">3. إضافة ملفات</h4> 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"> <select id="file-mode" class="border p-3 rounded-xl font-bold"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select> <select id="file-major" class="border p-3 rounded-xl font-bold"> <option value="Competition">مسابقات</option><option value="لغة عربية">لغة عربية</option> <option value="رياضيات">رياضيات</option><option value="علوم">علوم</option> <option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option> </select> <select id="file-minor" class="border p-3 rounded-xl font-bold"><option value="ملفات">ملفات التخصص</option><option value="تربوي">تربوي</option> <option value="حاسب آلي">حاسب آلي</option> </select> 
-      </div> 
-      <input id="file-name" placeholder="اسم الملف" class="w-full border p-3 rounded-xl font-bold mb-2"> 
-      <input id="file-url" placeholder="الرابط" class="w-full border p-3 rounded-xl font-bold mb-2 text-left" dir="ltr"> <button onclick="admin.addFile()" class="w-full bg-red-600 text-white py-3 rounded-xl font-black">حفظ الملف</button> 
-     </div> 
-    </div> 
-    <div id="tab-simulation" class="adm-tab bg-white p-6 rounded-[2rem] shadow-sm border border-yellow-400"> 
-     <h3 class="font-black text-xl mb-6 text-slate-800">⚙️ إنشاء اختبار محاكي جديد</h3> 
-     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"> 
-      <div> <label class="text-xs font-bold block">اسم المحاكاة</label> 
-       <input id="new-sim-name" placeholder="مثلاً: المحاكي الأول" class="border p-2 w-full rounded-lg font-bold"> 
-      </div> 
-      <div> <label class="text-xs font-bold block">الحالة</label><select id="new-sim-mode" class="border p-2 w-full rounded-lg font-bold"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select> 
-      </div> 
-      <div> <label class="text-xs font-bold block text-blue-600">تخصص المحاكي</label> <select id="new-sim-major" class="border p-2 w-full rounded-lg font-bold"> <option value="لغة عربية">لغة عربية</option> <option value="رياضيات">رياضيات</option> <option value="علوم">علوم</option> <option value="دراسات">دراسات</option> <option value="لغة إنجليزية">English</option> </select> 
-      </div> 
-     </div> 
-     <p class="text-xs text-slate-500 font-bold mb-2">توزيع الأسئلة:</p> 
-     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6"> 
-      <div> <label class="text-[10px] font-bold block text-blue-600">تخصص</label> 
-       <input type="number" id="ns-spec" class="border p-2 w-full rounded-lg text-center" value="15"> 
-      </div> 
-      <div> <label class="text-[10px] font-bold block">تربوي</label> 
-       <input type="number" id="ns-ped" class="border p-2 w-full rounded-lg text-center" value="10"> 
-      </div> 
-      <div> <label class="text-[10px] font-bold block">جدارات</label> 
-       <input type="number" id="ns-comp" class="border p-2 w-full rounded-lg text-center" value="5"> 
-      </div> 
-      <div> <label class="text-[10px] font-bold block">IQ</label> 
-       <input type="number" id="ns-iq" class="border p-2 w-full rounded-lg text-center" value="5"> 
-      </div> 
-      <div> <label class="text-[10px] font-bold block">عربي</label> 
-       <input type="number" id="ns-ar" class="border p-2 w-full rounded-lg text-center" value="5"> 
-      </div> 
-      <div> <label class="text-[10px] font-bold block">إنجليزي</label> 
-       <input type="number" id="ns-en" class="border p-2 w-full rounded-lg text-center" value="5"> 
-      </div> 
-      <div class="bg-blue-50 p-1 rounded-lg"> <label class="text-[10px] font-bold block text-blue-700">حاسب آلي</label> 
-       <input type="number" id="ns-cs" class="border-2 border-blue-200 p-2 w-full rounded-lg text-center font-bold" value="5"> 
-      </div> 
-      <div> <label class="text-[10px] font-bold block">معلومات</label> 
-       <input type="number" id="ns-gen" class="border p-2 w-full rounded-lg text-center" value="5"> 
-      </div> 
-      <div> <label class="text-[10px] font-bold block text-red-500">الوقت (د)</label> 
-       <input type="number" id="ns-time" class="border p-2 w-full rounded-lg text-center bg-red-50" value="60"> 
-      </div> 
-     </div> <button onclick="admin.createSimulation()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black">إضافة المحاكي</button> 
-    </div> 
-    <div id="tab-manage" class="adm-tab bg-white p-6 rounded-[2rem] shadow-sm"> 
-     <div class="flex justify-between items-center mb-6 pb-4 border-b"> 
-      <h3 class="font-black text-xl text-slate-800">إدارة المحتوى الكاملة</h3> <button onclick="admin.nuke()" class="text-red-500 font-bold border border-red-200 px-3 py-1 rounded-xl text-xs hover:bg-red-50">حذف المصنع ⚠️</button> 
-     </div> 
-     <div id="admin-tree" class="space-y-4"></div> 
-    </div> 
-   </div> 
-  </div> 
-  <div id="edit-q-modal" class="fixed inset-0 bg-slate-900/95 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-sm"> 
-   <div class="bg-white p-8 rounded-[2rem] w-full max-w-lg space-y-4 shadow-2xl"> 
-    <h3 class="font-black text-xl text-center">تعديل السؤال</h3> 
-    <input type="hidden" id="edit-qid"> 
-    <input type="hidden" id="edit-idx"> <textarea id="eq-text" class="w-full border p-4 rounded-xl h-28 font-bold text-lg"></textarea> 
-    <div class="grid grid-cols-2 gap-3"> 
-     <input id="eq-o0" class="border p-3 rounded-lg font-bold"> 
-     <input id="eq-o1" class="border p-3 rounded-lg font-bold"> 
-     <input id="eq-o2" class="border p-3 rounded-lg font-bold"> 
-     <input id="eq-o3" class="border p-3 rounded-lg font-bold"> 
-    </div> 
-    <div class="flex items-center gap-2"> <label class="text-xs font-bold whitespace-nowrap">رقم الإجابة (0-3):</label> 
-     <input id="eq-ans" type="number" class="w-20 border p-2 rounded-lg text-center font-bold"> 
-    </div> 
-    <div class="flex gap-2 pt-4"> <button onclick="admin.saveQuestionEdit()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-black shadow">حفظ</button> <button onclick="document.getElementById('edit-q-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold">إلغاء</button> 
-    </div> 
-   </div> 
-  </div> 
-  <div id="edit-quiz-name-modal" class="fixed inset-0 bg-slate-900/95 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-sm"> 
-   <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm space-y-4 shadow-2xl"> 
-    <h3 class="font-black text-xl text-center text-blue-800">تغيير اسم الاختبار</h3> 
-    <input type="hidden" id="edit-name-qid"> 
-    <input id="new-quiz-name-input" type="text" class="w-full border-2 border-blue-200 p-4 rounded-xl font-bold text-lg text-center focus:border-blue-500" placeholder="الاسم الجديد"> 
-    <div class="flex gap-2 pt-2"> <button onclick="admin.saveQuizName()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black shadow hover:bg-blue-700">تحديث الاسم</button> <button onclick="document.getElementById('edit-quiz-name-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold hover:bg-slate-200">إلغاء</button> 
-    </div> 
-   </div> 
-  </div> 
-  <script>
+    </style>
+</head>
+<body class="pb-20 text-slate-800">
+    <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold min-w-[300px] justify-center">
+        <i id="toast-icon" class="text-xl"></i>
+        <span id="toast-msg"></span>
+    </div>
+
+    <nav class="bg-slate-900 text-white p-4 shadow-xl sticky top-0 z-50 border-b-4 border-emerald-500">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-black flex items-center gap-2">
+                <i class="fas fa-sliders-h text-emerald-400"></i> لوحة الإدارة
+            </h1>
+            <button onclick="app.logout()" class="hidden id-logout bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl font-bold text-xs transition-all">خروج</button>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <div id="login-view" class="max-w-md mx-auto bg-white p-10 rounded-[2.5rem] shadow-2xl mt-12 text-center border-t-8 border-slate-900">
+            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-user-lock text-3xl text-slate-800"></i>
+            </div>
+            <h2 class="text-3xl font-black mb-8">تسجيل دخول المدير</h2>
+            <div class="space-y-4">
+                <input type="email" id="adm-email" placeholder="البريد الإلكتروني" class="w-full border-2 p-4 rounded-2xl font-bold">
+                <input type="password" id="adm-pass" placeholder="كلمة المرور" class="w-full border-2 p-4 rounded-2xl font-bold">
+                <button onclick="app.login()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-black transition-all">دخول آمن</button>
+            </div>
+        </div>
+
+        <div id="panel-view" class="hidden space-y-8">
+            <div class="flex gap-3 overflow-x-auto pb-4 no-scrollbar justify-center">
+                <button onclick="admin.switchTab('settings')" class="tab-btn active bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow">🛠️ الإعدادات</button>
+                <button onclick="admin.switchTab('create')" class="tab-btn bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow">📝 إنشاء محتوى</button>
+                <button onclick="admin.switchTab('simulation')" class="tab-btn bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow border-2 border-yellow-200">⚙️ إنشاء محاكي</button>
+                <button onclick="admin.switchTab('manage')" class="tab-btn bg-white text-slate-600 px-6 py-3 rounded-2xl font-black text-sm whitespace-nowrap shadow">🗂️ إدارة وتعديل</button>
+            </div>
+
+            <div id="tab-settings" class="adm-tab active block bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                <h3 class="font-black text-xl mb-6 text-emerald-700 border-r-4 border-emerald-500 pr-3">إعدادات النصوص والروابط</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-50 p-5 rounded-3xl space-y-3">
+                        <h4 class="font-bold text-slate-800 mb-2">البيانات الأساسية</h4>
+                        <div><label class="text-[10px] font-bold text-slate-400">اسم المنصة:</label><input id="set-site-name" class="w-full border p-2 rounded-xl font-bold"></div>
+                        <div><label class="text-[10px] font-bold text-slate-400">العنوان الرئيسي (Hero):</label><input id="set-hero-title" class="w-full border p-2 rounded-xl font-bold"></div>
+                        <div><label class="text-[10px] font-bold text-slate-400">الوصف:</label><input id="set-hero-desc" class="w-full border p-2 rounded-xl font-bold"></div>
+                        <div><label class="text-[10px] font-bold text-yellow-600">كود المشتركين (Password):</label><input id="set-access-code" class="w-full border p-2 rounded-xl bg-yellow-50 font-black text-center text-lg"></div>
+                    </div>
+                    <div class="bg-slate-50 p-5 rounded-3xl space-y-3">
+                        <h4 class="font-bold text-slate-800 mb-2">الأزرار والتواصل</h4>
+                        <div><label class="text-[10px] font-bold text-slate-400">واتساب:</label><input id="set-whatsapp" class="w-full border p-2 rounded-xl font-bold"></div>
+                        <div><label class="text-[10px] font-bold text-slate-400">نص الفوتر:</label><input id="set-footer-text" class="w-full border p-2 rounded-xl font-bold"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-[10px] font-bold text-slate-400">زر الزوار:</label><input id="set-btn-visitor" class="w-full border p-2 rounded-xl font-bold"></div>
+                            <div><label class="text-[10px] font-bold text-slate-400">زر المشتركين:</label><input id="set-btn-sub" class="w-full border p-2 rounded-xl font-bold"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-slate-800 p-5 rounded-3xl space-y-2 text-white">
+                        <h4 class="font-bold text-yellow-400">الرابط الخارجي</h4>
+                        <input id="set-ext-link-url" placeholder="URL" class="w-full bg-slate-700 border-none p-2 rounded-xl text-xs">
+                        <input id="set-ext-link-text" placeholder="النص" class="w-full bg-slate-700 border-none p-2 rounded-xl text-xs">
+                    </div>
+                    <div class="bg-blue-50 p-5 rounded-3xl space-y-2">
+                        <h4 class="font-bold text-blue-600">تطبيق الهاتف</h4>
+                        <input id="set-app-link" placeholder="رابط التحميل" class="w-full bg-white border p-2 rounded-xl text-xs">
+                        <input id="set-app-text" placeholder="نص البنر" class="w-full bg-white border p-2 rounded-xl text-xs">
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <label class="text-xs font-bold text-slate-400">تعليمات الصفحة الرئيسية:</label>
+                    <textarea id="set-tutorial" class="w-full border p-3 rounded-2xl h-24 font-bold bg-slate-50 text-slate-700"></textarea>
+                </div>
+                <button onclick="admin.saveSettings()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl mt-6 font-black shadow-lg hover:bg-emerald-700 transition-all">حفظ الإعدادات ✅</button>
+            </div>
+
+            <div id="tab-create" class="adm-tab space-y-6">
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-blue-600">
+                    <h4 class="font-black text-lg mb-4 text-blue-800">1. إنشاء اختبار جديد</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <select id="adm-mode" class="w-full border p-3 rounded-xl font-bold bg-slate-50"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select>
+                        <select id="adm-major" class="w-full border p-3 rounded-xl font-bold bg-slate-50">
+                            <option value="Universal">عام</option><option value="Competition">مسابقات</option>
+                            <option value="لغة عربية">لغة عربية</option><option value="رياضيات">رياضيات</option>
+                            <option value="علوم">علوم</option><option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option>
+                        </select>
+                        <select id="adm-minor" class="w-full border p-3 rounded-xl font-bold bg-slate-50">
+                            <option value="تخصص">أسئلة التخصص</option><option value="تربوي">تربوي</option>
+                            <option value="جدارات">جدارات</option><option value="IQ">IQ</option>
+                            <option value="عربي للجميع">عربي للجميع</option><option value="انجليزي للجميع">انجليزي للجميع</option>
+                            <option value="حاسب آلي">حاسب آلي</option><option value="معلومات عامة">معلومات عامة</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <input id="new-quiz-name" placeholder="اسم الاختبار" class="flex-1 border-2 p-3 rounded-xl font-bold">
+                        <button onclick="admin.addQuiz()" class="bg-blue-600 text-white px-6 rounded-xl font-black">إنشاء</button>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-purple-600">
+                    <h4 class="font-black text-lg mb-4 text-purple-800">2. إضافة الأسئلة</h4>
+                    <select id="adm-target-quiz" class="w-full border-2 p-3 rounded-xl font-bold bg-purple-50 mb-4"></select>
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="document.getElementById('add-manual').classList.remove('hidden');document.getElementById('add-bulk').classList.add('hidden')" class="flex-1 bg-purple-600 text-white py-2 rounded-xl font-bold">يدوي</button>
+                        <button onclick="document.getElementById('add-bulk').classList.remove('hidden');document.getElementById('add-manual').classList.add('hidden')" class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-xl font-bold">مجمع (JSON)</button>
+                    </div>
+                    <div id="add-manual" class="space-y-3">
+                        <textarea id="q-text" placeholder="نص السؤال" class="w-full border p-3 rounded-xl h-20 font-bold"></textarea>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input id="opt1" placeholder="أ" class="border p-2 rounded-lg font-bold">
+                            <input id="opt2" placeholder="ب" class="border p-2 rounded-lg font-bold">
+                            <input id="opt3" placeholder="ج" class="border p-2 rounded-lg font-bold">
+                            <input id="opt4" placeholder="د" class="border p-2 rounded-lg font-bold">
+                        </div>
+                        <input id="q-ans" placeholder="الإجابة الصحيحة" class="w-full border bg-emerald-50 p-3 rounded-xl font-bold text-center">
+                        <button onclick="admin.addManualQ()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-black">حفظ السؤال</button>
+                    </div>
+                    <div id="add-bulk" class="hidden space-y-3">
+                        <p class="text-[10px] font-bold text-slate-500">ضع الأسئلة داخل مصفوفة <code>[...]</code> وتأكد من الفواصل.</p>
+                        <textarea id="json-input" class="w-full bg-slate-900 text-green-400 font-mono p-4 rounded-xl h-32 text-xs" dir="ltr"></textarea>
+                        <button onclick="admin.processJSON()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-black">استيراد</button>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-red-600">
+                    <h4 class="font-black text-lg mb-4 text-red-700">3. إضافة ملفات</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <select id="file-mode" class="border p-3 rounded-xl font-bold"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select>
+                        <select id="file-major" class="border p-3 rounded-xl font-bold">
+                            <option value="Competition">مسابقات</option><option value="لغة عربية">لغة عربية</option>
+                            <option value="رياضيات">رياضيات</option><option value="علوم">علوم</option>
+                            <option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option>
+                        </select>
+                        <select id="file-minor" class="border p-3 rounded-xl font-bold"><option value="ملفات">ملفات التخصص</option><option value="تربوي">تربوي</option><option value="حاسب آلي">حاسب آلي</option></select>
+                    </div>
+                    <input id="file-name" placeholder="اسم الملف" class="w-full border p-3 rounded-xl font-bold mb-2">
+                    <input id="file-url" placeholder="الرابط" class="w-full border p-3 rounded-xl font-bold mb-2 text-left" dir="ltr">
+                    <button onclick="admin.addFile()" class="w-full bg-red-600 text-white py-3 rounded-xl font-black">حفظ الملف</button>
+                </div>
+            </div>
+
+            <div id="tab-simulation" class="adm-tab bg-white p-6 rounded-[2rem] shadow-sm border border-yellow-400">
+                <h3 class="font-black text-xl mb-6 text-slate-800">⚙️ إنشاء اختبار محاكي جديد</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div><label class="text-xs font-bold block">اسم المحاكاة</label><input id="new-sim-name" placeholder="مثلاً: المحاكي الأول" class="border p-2 w-full rounded-lg font-bold"></div>
+                    <div><label class="text-xs font-bold block">الحالة</label><select id="new-sim-mode" class="border p-2 w-full rounded-lg font-bold"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select></div>
+                    <div>
+                        <label class="text-xs font-bold block text-blue-600">تخصص المحاكي</label>
+                        <select id="new-sim-major" class="border p-2 w-full rounded-lg font-bold">
+                            <option value="لغة عربية">لغة عربية</option><option value="رياضيات">رياضيات</option>
+                            <option value="علوم">علوم</option><option value="دراسات">دراسات</option><option value="لغة إنجليزية">English</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 font-bold mb-2">توزيع الأسئلة:</p>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                    <div><label class="text-[10px] font-bold block text-blue-600">تخصص</label><input type="number" id="ns-spec" class="border p-2 w-full rounded-lg text-center" value="15"></div>
+                    <div><label class="text-[10px] font-bold block">تربوي</label><input type="number" id="ns-ped" class="border p-2 w-full rounded-lg text-center" value="10"></div>
+                    <div><label class="text-[10px] font-bold block">جدارات</label><input type="number" id="ns-comp" class="border p-2 w-full rounded-lg text-center" value="5"></div>
+                    <div><label class="text-[10px] font-bold block">IQ</label><input type="number" id="ns-iq" class="border p-2 w-full rounded-lg text-center" value="5"></div>
+                    <div><label class="text-[10px] font-bold block">عربي</label><input type="number" id="ns-ar" class="border p-2 w-full rounded-lg text-center" value="5"></div>
+                    <div><label class="text-[10px] font-bold block">إنجليزي</label><input type="number" id="ns-en" class="border p-2 w-full rounded-lg text-center" value="5"></div>
+                    <div class="bg-blue-50 p-1 rounded-lg"><label class="text-[10px] font-bold block text-blue-700">حاسب آلي</label><input type="number" id="ns-cs" class="border-2 border-blue-200 p-2 w-full rounded-lg text-center font-bold" value="5"></div>
+                    <div><label class="text-[10px] font-bold block">معلومات</label><input type="number" id="ns-gen" class="border p-2 w-full rounded-lg text-center" value="5"></div>
+                    <div><label class="text-[10px] font-bold block text-red-500">الوقت (د)</label><input type="number" id="ns-time" class="border p-2 w-full rounded-lg text-center bg-red-50" value="60"></div>
+                </div>
+                <button onclick="admin.createSimulation()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black">إضافة المحاكي</button>
+            </div>
+
+            <div id="tab-manage" class="adm-tab bg-white p-6 rounded-[2rem] shadow-sm">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b">
+                    <h3 class="font-black text-xl text-slate-800">إدارة المحتوى الكاملة</h3>
+                    <button onclick="admin.nuke()" class="text-red-500 font-bold border border-red-200 px-3 py-1 rounded-xl text-xs hover:bg-red-50">حذف المصنع ⚠️</button>
+                </div>
+                <div id="admin-tree" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-q-modal" class="fixed inset-0 bg-slate-900/95 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-[2rem] w-full max-w-lg space-y-4 shadow-2xl">
+            <h3 class="font-black text-xl text-center">تعديل السؤال</h3>
+            <input type="hidden" id="edit-qid"><input type="hidden" id="edit-idx">
+            <textarea id="eq-text" class="w-full border p-4 rounded-xl h-28 font-bold text-lg"></textarea>
+            <div class="grid grid-cols-2 gap-3">
+                <input id="eq-o0" class="border p-3 rounded-lg font-bold">
+                <input id="eq-o1" class="border p-3 rounded-lg font-bold">
+                <input id="eq-o2" class="border p-3 rounded-lg font-bold">
+                <input id="eq-o3" class="border p-3 rounded-lg font-bold">
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold whitespace-nowrap">رقم الإجابة (0-3):</label>
+                <input id="eq-ans" type="number" class="w-20 border p-2 rounded-lg text-center font-bold">
+            </div>
+            <div class="flex gap-2 pt-4">
+                <button onclick="admin.saveQuestionEdit()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-black shadow">حفظ</button>
+                <button onclick="document.getElementById('edit-q-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-quiz-name-modal" class="fixed inset-0 bg-slate-900/95 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm space-y-4 shadow-2xl">
+            <h3 class="font-black text-xl text-center text-blue-800">تغيير اسم الاختبار</h3>
+            <input type="hidden" id="edit-name-qid">
+            <input id="new-quiz-name-input" type="text" class="w-full border-2 border-blue-200 p-4 rounded-xl font-bold text-lg text-center focus:border-blue-500" placeholder="الاسم الجديد">
+            <div class="flex gap-2 pt-2">
+                <button onclick="admin.saveQuizName()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black shadow hover:bg-blue-700">تحديث الاسم</button>
+                <button onclick="document.getElementById('edit-quiz-name-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold hover:bg-slate-200">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDvFOWeYV2grWux_Z-nl3uFiTR2Jd9UlvE",
             authDomain: "tgrep-11831.firebaseapp.com",
@@ -390,7 +434,6 @@
                             </div>
                         </div>`;
                     });
-                    
                     fullHtml += `</div></details>`;
                 }
                 
@@ -546,6 +589,6 @@
             save: () => dbRef.set(db)
         };
         app.init();
-    </script> 
- 
+    </script>
+
 </body></html>
