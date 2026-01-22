@@ -3,7 +3,7 @@
  <head> 
   <meta charset="UTF-8"> 
   <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-  <title>لوحة القيادة | أ. أحمد عيد</title> 
+  <title>لوحة القيادة | الإدارة</title> 
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script> 
   <script>
         tailwind.config = {
@@ -79,8 +79,13 @@
       </div> 
       <div class="bg-slate-50 p-5 rounded-3xl space-y-3"> 
        <h4 class="font-bold text-slate-800 mb-2">الأزرار والتواصل</h4> 
-       <div> <label class="text-[10px] font-bold text-slate-400">واتساب:</label> 
-        <input id="set-whatsapp" class="w-full border p-2 rounded-xl font-bold"> 
+       <div class="grid grid-cols-2 gap-2"> 
+        <div> <label class="text-[10px] font-bold text-slate-400">واتساب (رقم):</label> 
+         <input id="set-whatsapp" class="w-full border p-2 rounded-xl font-bold text-left" dir="ltr" placeholder="201xxxx"> 
+        </div> 
+        <div> <label class="text-[10px] font-bold text-slate-400">تلجرام (User):</label> 
+         <input id="set-telegram" class="w-full border p-2 rounded-xl font-bold text-left text-blue-500" dir="ltr" placeholder="username"> 
+        </div> 
        </div> 
        <div> <label class="text-[10px] font-bold text-slate-400">نص الفوتر:</label> 
         <input id="set-footer-text" class="w-full border p-2 rounded-xl font-bold"> 
@@ -133,6 +138,7 @@
           <th class="p-3">اسم المستخدم</th> 
           <th class="p-3">كلمة المرور</th> 
           <th class="p-3">تاريخ الانتهاء</th> 
+          <th class="p-3">أمان الجلسة</th> 
           <th class="p-3 rounded-l-xl text-center">إجراءات</th> 
          </tr> 
         </thead> 
@@ -312,7 +318,8 @@
             },
             loadSettings: () => {
                 const s = db.settings || {};
-                const ids = ['set-site-name', 'set-hero-title', 'set-hero-desc', 'set-whatsapp', 'set-footer-text', 'set-tutorial', 'set-ext-link-url', 'set-ext-link-text', 'set-app-link', 'set-app-text', 'set-btn-visitor', 'set-btn-sub'];
+                // تمت إضافة telegram للقائمة
+                const ids = ['set-site-name', 'set-hero-title', 'set-hero-desc', 'set-whatsapp', 'set-telegram', 'set-footer-text', 'set-tutorial', 'set-ext-link-url', 'set-ext-link-text', 'set-app-link', 'set-app-text', 'set-btn-visitor', 'set-btn-sub'];
                 ids.forEach(id => { 
                     const k = id.replace('set-','').replace(/-./g, x=>x[1].toUpperCase());
                     if(id === 'set-tutorial' && s.tutorialText) document.getElementById(id).value = s.tutorialText;
@@ -321,7 +328,8 @@
             },
             saveSettings: () => {
                 const s = {};
-                ['siteName','heroTitle','heroDesc','whatsapp','footerText','tutorialText','extLinkUrl','extLinkText','appLink','appText','btnVisitor','btnSub'].forEach(k => {
+                // تمت إضافة telegram للقائمة
+                ['siteName','heroTitle','heroDesc','whatsapp','telegram','footerText','tutorialText','extLinkUrl','extLinkText','appLink','appText','btnVisitor','btnSub'].forEach(k => {
                     let id = 'set-' + k.replace(/[A-Z]/g, x => '-' + x.toLowerCase());
                     if(k === 'tutorialText') id = 'set-tutorial';
                     s[k] = document.getElementById(id).value;
@@ -337,8 +345,8 @@
 
                 if(!u || !p || !durVal) return app.notify("جميع الحقول مطلوبة", "error");
                 
-                // Check if username exists
-                if(db.users && db.users.some(x => x.username === u)) return app.notify("اسم المستخدم موجود مسبقاً", "error");
+                const currentUsers = db.users ? Object.values(db.users) : [];
+                if(currentUsers.some(x => x.username === u)) return app.notify("اسم المستخدم موجود مسبقاً", "error");
 
                 const now = Date.now();
                 let expiry = now;
@@ -346,15 +354,28 @@
                 else expiry += durVal * 24 * 60 * 60 * 1000;
 
                 if(!db.users) db.users = [];
-                db.users.push({
-                    id: Date.now(),
-                    username: u,
-                    password: p,
-                    expiryDate: expiry,
-                    isActive: true,
-                    createdAt: now,
-                    sessionToken: null // Initialize session token
-                });
+                if(Array.isArray(db.users)) {
+                     db.users.push({
+                        id: Date.now(),
+                        username: u,
+                        password: p,
+                        expiryDate: expiry,
+                        isActive: true,
+                        createdAt: now,
+                        sessionToken: ''
+                    });
+                } else {
+                    const newKey = Date.now();
+                    db.users[newKey] = {
+                        id: newKey,
+                        username: u,
+                        password: p,
+                        expiryDate: expiry,
+                        isActive: true,
+                        createdAt: now,
+                        sessionToken: ''
+                    };
+                }
                 
                 admin.save();
                 app.notify("تم إنشاء حساب المشترك بنجاح");
@@ -363,11 +384,11 @@
             },
             renderUsers: () => {
                 const tbody = document.getElementById('users-list-body');
-                const users = db.users || [];
+                const users = db.users ? Object.values(db.users) : [];
                 document.getElementById('users-count').innerText = `${users.length} مشترك`;
                 
                 if(!users.length) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">لا يوجد مشتركين حالياً</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">لا يوجد مشتركين حالياً</td></tr>';
                     return;
                 }
 
@@ -377,19 +398,20 @@
                     const statusClass = !user.isActive ? 'bg-red-100 text-red-600' : isExpired ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600';
                     const statusText = !user.isActive ? 'موقوف' : isExpired ? 'منتهي' : 'نشط';
                     const timeLeft = isExpired ? '0' : Math.ceil((user.expiryDate - now) / (1000 * 60 * 60 * 24)) + ' يوم';
-                    const isOnline = user.sessionToken ? '<span class="text-green-500 text-[10px] mr-1">● متصل</span>' : '';
+                    const sessionStatus = user.sessionToken ? '<span class="text-xs text-blue-600 font-bold">جلسة نشطة 🔵</span>' : '<span class="text-xs text-slate-400">غير متصل</span>';
 
                     return `
                     <tr class="border-b hover:bg-slate-50">
-                        <td class="p-3">
-                            <span class="${statusClass} px-2 py-1 rounded text-xs">${statusText}</span>
-                            ${isOnline}
-                        </td>
+                        <td class="p-3"><span class="${statusClass} px-2 py-1 rounded text-xs">${statusText}</span></td>
                         <td class="p-3">${user.username}</td>
                         <td class="p-3 font-mono bg-slate-100 rounded text-center select-all">${user.password}</td>
                         <td class="p-3 text-xs">
                             ${new Date(user.expiryDate).toLocaleDateString('ar-EG')}
                             <span class="block text-slate-400">متبقي: ${timeLeft}</span>
+                        </td>
+                         <td class="p-3 text-center">
+                            ${sessionStatus}
+                            <button onclick="admin.resetSession(${user.id})" class="block mx-auto text-[10px] text-red-400 underline mt-1" title="طرد المستخدم">إعادة ضبط</button>
                         </td>
                         <td class="p-3 text-center flex gap-2 justify-center">
                             <button onclick="admin.toggleUserStatus(${user.id})" class="p-2 rounded hover:bg-slate-200 text-slate-600" title="${user.isActive ? 'إيقاف' : 'تفعيل'}">
@@ -398,33 +420,44 @@
                             <button onclick="admin.deleteUser(${user.id})" class="p-2 rounded hover:bg-red-100 text-red-600" title="حذف">
                                 <i class="fas fa-trash"></i>
                             </button>
-                            <button onclick="admin.resetSession(${user.id})" class="p-2 rounded hover:bg-yellow-100 text-yellow-600" title="تسجيل خروج إجباري">
-                                <i class="fas fa-sign-out-alt"></i>
-                            </button>
                         </td>
                     </tr>`;
                 }).join('');
             },
             toggleUserStatus: (id) => {
-                const u = db.users.find(x => x.id === id);
-                if(u) {
-                    u.isActive = !u.isActive;
-                    admin.save();
+                if(Array.isArray(db.users)) {
+                    const u = db.users.find(x => x.id === id);
+                    if(u) u.isActive = !u.isActive;
+                } else {
+                    Object.values(db.users).forEach(u => { if(u.id === id) u.isActive = !u.isActive; });
                 }
+                admin.save();
             },
             deleteUser: (id) => {
                 if(confirm("هل أنت متأكد من حذف هذا المشترك؟")) {
-                    db.users = db.users.filter(x => x.id !== id);
+                     if(Array.isArray(db.users)) {
+                        db.users = db.users.filter(x => x.id !== id);
+                     } else {
+                         for(let key in db.users) {
+                             if(db.users[key].id === id) { delete db.users[key]; break; }
+                         }
+                     }
                     admin.save();
                 }
             },
             resetSession: (id) => {
-                 const u = db.users.find(x => x.id === id);
-                 if(u) {
-                     u.sessionToken = null; // Force logout
-                     admin.save();
-                     app.notify("تم طرد المستخدم من الجلسة");
-                 }
+                let found = false;
+                if(Array.isArray(db.users)) {
+                    const u = db.users.find(x => x.id === id);
+                    if(u) { u.sessionToken = ''; found=true; }
+                } else {
+                    Object.values(db.users).forEach(u => { if(u.id === id) { u.sessionToken = ''; found=true; } });
+                }
+                
+                if(found) {
+                    admin.save();
+                    app.notify("تم تسجيل خروج المستخدم من الأجهزة");
+                }
             },
             // --- END USER MANAGEMENT ---
             
