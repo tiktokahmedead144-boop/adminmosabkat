@@ -318,7 +318,6 @@
             },
             loadSettings: () => {
                 const s = db.settings || {};
-                // تمت إضافة telegram للقائمة
                 const ids = ['set-site-name', 'set-hero-title', 'set-hero-desc', 'set-whatsapp', 'set-telegram', 'set-footer-text', 'set-tutorial', 'set-ext-link-url', 'set-ext-link-text', 'set-app-link', 'set-app-text', 'set-btn-visitor', 'set-btn-sub'];
                 ids.forEach(id => { 
                     const k = id.replace('set-','').replace(/-./g, x=>x[1].toUpperCase());
@@ -328,7 +327,6 @@
             },
             saveSettings: () => {
                 const s = {};
-                // تمت إضافة telegram للقائمة
                 ['siteName','heroTitle','heroDesc','whatsapp','telegram','footerText','tutorialText','extLinkUrl','extLinkText','appLink','appText','btnVisitor','btnSub'].forEach(k => {
                     let id = 'set-' + k.replace(/[A-Z]/g, x => '-' + x.toLowerCase());
                     if(k === 'tutorialText') id = 'set-tutorial';
@@ -453,14 +451,11 @@
                 } else {
                     Object.values(db.users).forEach(u => { if(u.id === id) { u.sessionToken = ''; found=true; } });
                 }
-                
                 if(found) {
                     admin.save();
                     app.notify("تم تسجيل خروج المستخدم من الأجهزة");
                 }
             },
-            // --- END USER MANAGEMENT ---
-            
             addQuiz: () => {
                 const n = document.getElementById('new-quiz-name').value;
                 if(!n) return app.notify("الاسم مطلوب", "error");
@@ -534,11 +529,20 @@
             },
             renderTree: () => {
                 const t = document.getElementById('admin-tree'); 
+                
+                // --- 1. حفظ حالة القوائم المفتوحة (عشان ما تقفلش لما نعمل تحديث) ---
+                const openIds = new Set();
+                t.querySelectorAll('details[id]').forEach(d => {
+                    if(d.hasAttribute('open')) openIds.add(d.id);
+                });
+
                 let fullHtml = "";
 
+                // --- 2. قسم المحاكيات ---
                 if(db.simulations && db.simulations.length) {
+                    const simId = 'group-simulations';
                     fullHtml += `
-                    <details>
+                    <details id="${simId}" ${openIds.has(simId) ? 'open' : ''}>
                         <summary>
                             <span class="text-slate-800 flex items-center gap-2">
                                 <i class="fas fa-bolt text-yellow-500"></i> المحاكيات
@@ -568,67 +572,95 @@
                     fullHtml += `</div></details>`;
                 }
                 
+                // --- 3. قسم الاختبارات مقسم بشكل منفصل ---
                 const quizzes = db.quizzes || [];
                 if (quizzes.length) {
                     fullHtml += `<h4 class="font-black text-xl text-slate-800 mb-4 mt-6 border-b pb-2 flex items-center gap-2"><i class="fas fa-book text-blue-600"></i> الاختبارات</h4>`;
-                    const majors = [...new Set(quizzes.map(q => q.major || 'غير محدد'))].sort();
+                    
+                    // تعريف الفئات التي نريد فصلها
+                    const categories = [
+                        { id: 'cat-ped', name: 'التربوي', filter: q => q.minor === 'تربوي' },
+                        { id: 'cat-comp', name: 'الجدارات', filter: q => q.minor === 'جدارات' },
+                        { id: 'cat-iq', name: 'IQ والذكاء', filter: q => q.minor === 'IQ' },
+                        { id: 'cat-ar-gen', name: 'عربي للجميع', filter: q => q.minor === 'عربي للجميع' },
+                        { id: 'cat-en-gen', name: 'انجليزي للجميع', filter: q => q.minor === 'انجليزي للجميع' },
+                        { id: 'cat-cs', name: 'حاسب آلي', filter: q => q.minor === 'حاسب آلي' },
+                        { id: 'cat-info', name: 'معلومات عامة', filter: q => q.minor === 'معلومات عامة' },
+                        // التخصصات الرئيسية
+                        { id: 'major-ar', name: 'لغة عربية (تخصص)', filter: q => q.major === 'لغة عربية' && q.minor === 'تخصص' },
+                        { id: 'major-math', name: 'رياضيات (تخصص)', filter: q => q.major === 'رياضيات' && q.minor === 'تخصص' },
+                        { id: 'major-sci', name: 'علوم (تخصص)', filter: q => q.major === 'علوم' && q.minor === 'تخصص' },
+                        { id: 'major-soc', name: 'دراسات (تخصص)', filter: q => q.major === 'دراسات' && q.minor === 'تخصص' },
+                        { id: 'major-eng', name: 'لغة إنجليزية (تخصص)', filter: q => q.major === 'لغة إنجليزية' && q.minor === 'تخصص' },
+                         // المسابقات وأي شيء آخر
+                        { id: 'major-comp', name: 'مسابقات', filter: q => q.major === 'Competition' }
+                    ];
 
-                    majors.forEach(major => {
-                        const majorQuizzes = quizzes.filter(q => (q.major || 'غير محدد') === major);
-                        fullHtml += `
-                        <details>
-                            <summary>
-                                <span class="text-slate-700 flex items-center gap-2">
-                                    <i class="fas fa-folder text-blue-500"></i> ${major}
-                                </span>
-                                <div class="flex items-center gap-3">
-                                    <span class="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full">${majorQuizzes.length}</span>
-                                    <i class="fas fa-chevron-down arrow-icon text-slate-400"></i>
-                                </div>
-                            </summary>
-                            <div class="details-content space-y-3">`;
+                    categories.forEach(cat => {
+                        const catQuizzes = quizzes.filter(cat.filter);
+                        if(catQuizzes.length > 0) {
+                            // استخدام الـ ID لحفظ حالة الفتح
+                            fullHtml += `
+                            <details id="${cat.id}" ${openIds.has(cat.id) ? 'open' : ''}>
+                                <summary>
+                                    <span class="text-slate-700 flex items-center gap-2">
+                                        <i class="fas fa-folder text-blue-500"></i> ${cat.name}
+                                    </span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full">${catQuizzes.length}</span>
+                                        <i class="fas fa-chevron-down arrow-icon text-slate-400"></i>
+                                    </div>
+                                </summary>
+                                <div class="details-content space-y-3">`;
 
-                        majorQuizzes.forEach(q => {
-                            const locked = q.mode === 'subscriber';
-                            let questionsHtml = '';
-                            (q.questions || []).forEach((sq, i) => {
-                                questionsHtml += `
-                                <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100 shadow-sm mt-1">
-                                    <span class="text-xs font-bold text-slate-600 truncate w-3/4">${i+1}. ${sq.text}</span>
-                                    <div class="flex gap-1">
-                                        <button onclick="admin.editQ(${q.id}, ${i})" class="text-xs text-emerald-500 p-1 hover:bg-emerald-50 rounded"><i class="fas fa-edit"></i></button>
-                                        <button onclick="admin.delQ(${q.id}, ${i})" class="text-xs text-red-500 p-1 hover:bg-red-50 rounded"><i class="fas fa-trash"></i></button>
+                            catQuizzes.forEach(q => {
+                                const locked = q.mode === 'subscriber';
+                                let questionsHtml = '';
+                                (q.questions || []).forEach((sq, i) => {
+                                    questionsHtml += `
+                                    <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100 shadow-sm mt-1">
+                                        <span class="text-xs font-bold text-slate-600 truncate w-3/4">${i+1}. ${sq.text}</span>
+                                        <div class="flex gap-1">
+                                            <button onclick="admin.editQ(${q.id}, ${i})" class="text-xs text-emerald-500 p-1 hover:bg-emerald-50 rounded"><i class="fas fa-edit"></i></button>
+                                            <button onclick="admin.delQ(${q.id}, ${i})" class="text-xs text-red-500 p-1 hover:bg-red-50 rounded"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </div>`;
+                                });
+
+                                // حفظ حالة قائمة الأسئلة أيضاً
+                                const qDetailsId = `q-det-${q.id}`;
+                                const isQOpen = openIds.has(qDetailsId);
+
+                                fullHtml += `
+                                <div class="bg-white p-3 rounded-lg border shadow-sm">
+                                    <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[10px] font-bold ${locked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} px-2 py-1 rounded-lg">${locked?'مغلق':'مفتوح'}</span>
+                                            <h5 class="font-bold text-slate-800">${q.name}</h5>
+                                            <button onclick="admin.openRenameModal(${q.id})" class="text-slate-400 hover:text-blue-600 transition-colors" title="تعديل الاسم"><i class="fas fa-pen text-xs"></i></button>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button onclick="admin.toggleQs('${qDetailsId}')" class="text-xs bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-bold border border-blue-100 hover:bg-blue-100">الأسئلة (${q.questions?.length||0})</button>
+                                            <button onclick="admin.toggleLock('quiz', ${q.id})" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold hover:bg-slate-200">${locked?'🔓 فتح':'🔒 قفل'}</button>
+                                            <button onclick="admin.delItem('quiz', ${q.id})" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg font-bold hover:bg-red-100">حذف</button>
+                                        </div>
+                                    </div>
+                                    <div id="${qDetailsId}" class="${isQOpen ? '' : 'hidden'} mt-4 pt-4 border-t space-y-2 bg-slate-50 p-2 rounded-lg" data-is-open="${isQOpen}">
+                                        ${questionsHtml}
                                     </div>
                                 </div>`;
                             });
-
-                            fullHtml += `
-                            <div class="bg-white p-3 rounded-lg border shadow-sm">
-                                <div class="flex flex-col md:flex-row justify-between items-center gap-2">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-[10px] font-bold ${locked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} px-2 py-1 rounded-lg">${locked?'مغلق':'مفتوح'}</span>
-                                        <h5 class="font-bold text-slate-800">${q.name} <span class="text-xs text-slate-400">(${q.minor})</span></h5>
-                                        <button onclick="admin.openRenameModal(${q.id})" class="text-slate-400 hover:text-blue-600 transition-colors" title="تعديل الاسم"><i class="fas fa-pen text-xs"></i></button>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <button onclick="admin.toggleQs(${q.id})" class="text-xs bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-bold border border-blue-100 hover:bg-blue-100">الأسئلة (${q.questions?.length||0})</button>
-                                        <button onclick="admin.toggleLock('quiz', ${q.id})" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold hover:bg-slate-200">${locked?'🔓 فتح':'🔒 قفل'}</button>
-                                        <button onclick="admin.delItem('quiz', ${q.id})" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg font-bold hover:bg-red-100">حذف</button>
-                                    </div>
-                                </div>
-                                <div id="qs-${q.id}" class="hidden mt-4 pt-4 border-t space-y-2 bg-slate-50 p-2 rounded-lg">
-                                    ${questionsHtml}
-                                </div>
-                            </div>`;
-                        });
-                        fullHtml += `</div></details>`;
+                            fullHtml += `</div></details>`;
+                        }
                     });
                 }
 
+                // --- 4. قسم الملفات ---
                 if(db.files && db.files.length) {
+                    const fileId = 'group-files';
                     fullHtml += `
                     <h4 class="font-black text-xl text-slate-800 mb-4 mt-6 border-b pb-2 flex items-center gap-2"><i class="fas fa-file-pdf text-red-600"></i> الملفات</h4>
-                    <details>
+                    <details id="${fileId}" ${openIds.has(fileId) ? 'open' : ''}>
                         <summary>
                             <span class="text-slate-800 flex items-center gap-2">
                                 <i class="fas fa-folder-open text-red-500"></i> أرشيف الملفات
@@ -658,7 +690,24 @@
                 }
                 t.innerHTML = fullHtml;
             },
-            toggleQs: (id) => document.getElementById('qs-'+id).classList.toggle('hidden'),
+            toggleQs: (divId) => {
+                // نستخدم class hidden للإخفاء والإظهار، ولكن نضيف سمة للتتبع عند إعادة الرسم
+                const el = document.getElementById(divId);
+                el.classList.toggle('hidden');
+                // إضافة سمة "open" وهمية للعنصر div عشان الكود يعرف يلقطه في المرة الجاية
+                if(!el.classList.contains('hidden')) {
+                    el.setAttribute('id', divId); // تأكيد ال ID
+                    // سنقوم بتسجيل هذا ال ID في المتصفح مؤقتاً أو الاعتماد على أن ال details[open] هو الأساس
+                    // الحل الأبسط: عند إعادة الرسم، نعتبر ال div مفتوحاً إذا كان له ID مميز في openIds
+                    // لذلك سنقوم بإضافة details وهمي حوله أو الاعتماد على ال ID
+                    // التعديل في renderTree سيقوم بفحص ال IDs المفتوحة
+                    
+                    // خدعة صغيرة: نضيف attribute اسمه 'open' لل div عشان ال querySelectorAll يلقطه
+                    el.setAttribute('open', ''); 
+                } else {
+                    el.removeAttribute('open');
+                }
+            },
             toggleLock: (type, id) => {
                 let list = type==='quiz'?db.quizzes : type==='file'?db.files : db.simulations;
                 let item = list.find(x=>x.id===id);
