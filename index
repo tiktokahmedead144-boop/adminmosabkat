@@ -140,7 +140,7 @@
         <div id="custom-branches-box" class="hidden animate-fadeIn mt-2"> 
          <p class="text-xs font-bold text-slate-500 mb-2">اختر الأقسام الفرعية التي تريد إضافتها:</p> 
          <div id="existing-branches-list" class="grid grid-cols-2 gap-2 mb-3 max-h-40 overflow-y-auto border p-2 rounded bg-white"> 
-          </div> <label class="block text-xs font-bold text-slate-500 mb-1">إضافة قسم فرعي جديد (اختياري)</label> 
+         </div> <label class="block text-xs font-bold text-slate-500 mb-1">إضافة قسم فرعي جديد (اختياري)</label> 
          <input id="new-custom-branch" placeholder="مثال: مراجعة ليلة الامتحان" class="w-full border p-3 rounded-xl font-bold text-sm"> 
         </div> 
        </div> <button onclick="admin.addMajor()" class="w-full bg-orange-600 text-white py-3 rounded-xl font-black shadow-lg hover:bg-orange-700 transition-all text-lg">حفظ القسم الجديد +</button> 
@@ -319,7 +319,8 @@
      <p class="text-xs font-bold text-slate-400">من (المصدر):</p> <select id="cp-src-major" class="w-full border p-2 rounded-lg font-bold text-xs"></select> <select id="cp-src-minor" class="w-full border p-2 rounded-lg font-bold text-xs"></select> 
     </div> 
     <div class="space-y-3 bg-indigo-50 p-4 rounded-xl border border-indigo-100"> 
-     <p class="text-xs font-bold text-indigo-400">إلى (الهدف):</p> <select id="cp-target-major" class="w-full border p-2 rounded-lg font-bold text-xs"></select> <input id="cp-target-minor-name" placeholder="اسم القسم الفرعي الجديد" class="w-full border p-2 rounded-lg font-bold text-xs text-center"> 
+     <p class="text-xs font-bold text-indigo-400">إلى (الهدف):</p> <select id="cp-target-major" class="w-full border p-2 rounded-lg font-bold text-xs"></select> 
+     <input id="cp-target-minor-name" placeholder="اسم القسم الفرعي الجديد" class="w-full border p-2 rounded-lg font-bold text-xs text-center"> 
     </div> 
     <div class="flex gap-2 pt-4"> <button onclick="admin.executeBranchCopy()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black shadow hover:bg-indigo-700">نسخ الكل</button> <button onclick="document.getElementById('copy-branch-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold">إلغاء</button> 
     </div> 
