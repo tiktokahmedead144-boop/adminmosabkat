@@ -39,6 +39,8 @@
         details[open] .arrow-icon { transform: rotate(180deg); }
         .details-content { padding: 1rem; background-color: white; animation: slideDown 0.3s ease-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Checkbox custom style */
+        .custom-checkbox { width: 1.25rem; height: 1.25rem; border-radius: 0.375rem; border: 2px solid #cbd5e1; cursor: pointer; }
     </style> 
  </head> 
  <body class="pb-20 text-slate-800"> 
@@ -132,13 +134,18 @@
        </div> 
        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200"> 
         <p class="font-bold text-sm mb-2 text-slate-700">نوع القسم:</p> 
-        <div class="flex gap-4 mb-3"> <label class="flex items-center gap-2 cursor-pointer"> <input type="radio" name="majorType" value="standard" checked onclick="document.getElementById('custom-branches-box').classList.add('hidden')" class="w-5 h-5 text-orange-600"> <span class="font-bold text-sm">قياسي (يحتوي على تخصص، تربوي، جدارات، إلخ)</span> </label> <label class="flex items-center gap-2 cursor-pointer"> <input type="radio" name="majorType" value="custom" onclick="document.getElementById('custom-branches-box').classList.remove('hidden')" class="w-5 h-5 text-orange-600"> <span class="font-bold text-sm">مخصص (أقسام فرعية أحددها أنا)</span> </label> 
+        <div class="flex gap-4 mb-3"> <label class="flex items-center gap-2 cursor-pointer"> <input type="radio" name="majorType" value="standard" checked onclick="document.getElementById('custom-branches-box').classList.add('hidden')" class="w-5 h-5 text-orange-600"> <span class="font-bold text-sm">قياسي (Universal)</span> </label> <label class="flex items-center gap-2 cursor-pointer"> <input type="radio" name="majorType" value="custom" onclick="document.getElementById('custom-branches-box').classList.remove('hidden')" class="w-5 h-5 text-orange-600"> <span class="font-bold text-sm">مخصص (خاص ومستقل)</span> </label> 
         </div> 
-        <div id="custom-branches-box" class="hidden animate-fadeIn mt-2"> <label class="block text-xs font-bold text-slate-500 mb-1">الأقسام الفرعية (افصل بينها بفاصلة)</label> 
-         <input id="new-major-branches" placeholder="مثال: الفصل الأول, الفصل الثاني, مراجعة نهائية" class="w-full border p-3 rounded-xl font-bold text-sm"> 
-         <p class="text-[10px] text-slate-400 mt-1 font-bold">هذه الأقسام ستظهر في القوائم المنسدلة عند إنشاء اختبار.</p> 
+        <div id="custom-branches-box" class="hidden animate-fadeIn mt-2 space-y-3"> 
+         <div class="p-3 bg-blue-50 rounded-lg border border-blue-100"> 
+          <p class="text-[10px] font-bold text-blue-600 mb-2">استيراد أقسام جاهزة (سيتم نسخ الاختبارات تلقائياً للقسم الجديد):</p> 
+          <div id="existing-branches-list" class="flex flex-wrap gap-2"> </div> 
+         </div> 
+         <div> <label class="block text-xs font-bold text-slate-500 mb-1">أقسام فرعية إضافية (جديدة):</label> 
+          <input id="new-major-branches" placeholder="أدخل الأسماء مفصولة بفاصلة. مثال: المراجعة النهائية, الفصل الأول" class="w-full border p-3 rounded-xl font-bold text-sm"> 
+         </div> 
         </div> 
-       </div> <button onclick="admin.addMajor()" class="w-full bg-orange-600 text-white py-3 rounded-xl font-black shadow-lg hover:bg-orange-700 transition-all text-lg">حفظ القسم الجديد +</button> 
+       </div> <button onclick="admin.addMajor()" class="w-full bg-orange-600 text-white py-3 rounded-xl font-black shadow-lg hover:bg-orange-700 transition-all text-lg">حفظ القسم وإنشاء المحتوى +</button> 
       </div> 
      </div> 
      <div class="bg-white p-6 rounded-[2rem] shadow-sm"> 
@@ -186,7 +193,7 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"> <select id="adm-mode" class="w-full border p-3 rounded-xl font-bold bg-slate-50"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select> 
        <div class="relative"> <label class="absolute -top-2 right-3 bg-white px-1 text-[10px] font-bold text-blue-600">اختر القسم</label> <select id="adm-major" class="w-full border-2 border-blue-100 p-3 rounded-xl font-bold bg-white text-slate-800 focus:border-blue-500"> </select> 
        </div> 
-       <div class="relative"> <label class="absolute -top-2 right-3 bg-white px-1 text-[10px] font-bold text-slate-400">الفرع / التخصص الفرعي</label> <select id="adm-minor" class="w-full border p-3 rounded-xl font-bold bg-slate-50"> <option value="تخصص">أسئلة التخصص</option> <option value="تربوي">تربوي</option> <option value="جدارات">جدارات</option> <option value="IQ">IQ</option> <option value="عربي للجميع">عربي للجميع</option> <option value="انجليزي للجميع">انجليزي للجميع</option> <option value="حاسب آلي">حاسب آلي</option> <option value="معلومات عامة">معلومات عامة</option> </select> 
+       <div class="relative"> <label class="absolute -top-2 right-3 bg-white px-1 text-[10px] font-bold text-slate-400">الفرع / التخصص الفرعي</label> <select id="adm-minor" class="w-full border p-3 rounded-xl font-bold bg-slate-50"> </select> 
        </div> 
       </div> 
       <div class="flex gap-2"> 
@@ -212,7 +219,7 @@
      </div> 
      <div class="bg-white p-6 rounded-[2rem] shadow-sm border-r-8 border-red-600"> 
       <h4 class="font-black text-lg mb-4 text-red-700">3. إضافة ملفات</h4> 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"> <select id="file-mode" class="border p-3 rounded-xl font-bold"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select> <select id="file-major" class="border p-3 rounded-xl font-bold text-red-600"></select> <select id="file-minor" class="border p-3 rounded-xl font-bold"><option value="ملفات">ملفات التخصص</option><option value="تربوي">تربوي</option><option value="حاسب آلي">حاسب آلي</option></select> 
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"> <select id="file-mode" class="border p-3 rounded-xl font-bold"><option value="visitor">🔓 مفتوح</option><option value="subscriber">🔒 للمشتركين</option></select> <select id="file-major" class="border p-3 rounded-xl font-bold text-red-600"></select> <select id="file-minor" class="border p-3 rounded-xl font-bold"></select> 
       </div> 
       <input id="file-name" placeholder="اسم الملف" class="w-full border p-3 rounded-xl font-bold mb-2"> 
       <input id="file-url" placeholder="الرابط" class="w-full border p-3 rounded-xl font-bold mb-2 text-left" dir="ltr"> <button onclick="admin.addFile()" class="w-full bg-red-600 text-white py-3 rounded-xl font-black">حفظ الملف</button> 
@@ -265,6 +272,8 @@
      <div class="flex justify-between items-center mb-6 pb-4 border-b"> 
       <h3 class="font-black text-xl text-slate-800">إدارة المحتوى الكاملة</h3> <button onclick="admin.nuke()" class="text-red-500 font-bold border border-red-200 px-3 py-1 rounded-xl text-xs hover:bg-red-50">حذف المصنع ⚠️</button> 
      </div> 
+     <div class="flex gap-2 mb-4 bg-slate-100 p-2 rounded-xl"> <button onclick="admin.bulkDeleteQuizzes()" class="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-600 transition-all shadow hidden" id="bulk-delete-btn"> <i class="fas fa-trash-alt"></i> حذف المحدد </button> <span class="text-xs font-bold text-slate-400 self-center mr-auto">حدد الاختبارات للحذف الجماعي</span> 
+     </div> 
      <div id="admin-tree" class="space-y-4"></div> 
     </div> 
    </div> 
@@ -299,8 +308,8 @@
   <div id="clone-quiz-modal" class="fixed inset-0 bg-slate-900/95 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-sm"> 
    <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm space-y-4 shadow-2xl"> 
     <h3 class="font-black text-xl text-center text-orange-600">نسخ الاختبار</h3> 
-    <p class="text-xs text-center text-slate-500 font-bold">سيتم إنشاء نسخة جديدة من الاختبار في القسم المختار.</p> 
-    <input type="hidden" id="clone-src-qid"> <label class="block text-xs font-bold text-slate-700 mt-4">اختر القسم الجديد:</label> <select id="clone-target-major" class="w-full border-2 p-3 rounded-xl font-bold text-center"></select> <label class="block text-xs font-bold text-slate-700 mt-2">اختر الفرع:</label> <select id="clone-target-minor" class="w-full border-2 p-3 rounded-xl font-bold text-center"> <option value="تخصص">تخصص</option><option value="تربوي">تربوي</option> <option value="جدارات">جدارات</option><option value="IQ">IQ</option> <option value="عربي للجميع">عربي للجميع</option><option value="انجليزي للجميع">انجليزي للجميع</option> <option value="حاسب آلي">حاسب آلي</option><option value="معلومات عامة">معلومات عامة</option> </select> 
+    <p class="text-xs text-center text-slate-500 font-bold">سيتم إنشاء نسخة جديدة مستقلة في القسم المختار.</p> 
+    <input type="hidden" id="clone-src-qid"> <label class="block text-xs font-bold text-slate-700 mt-4">اختر القسم الجديد:</label> <select id="clone-target-major" class="w-full border-2 p-3 rounded-xl font-bold text-center"></select> <label class="block text-xs font-bold text-slate-700 mt-2">اختر الفرع:</label> <select id="clone-target-minor" class="w-full border-2 p-3 rounded-xl font-bold text-center"> </select> 
     <div class="flex gap-2 pt-4"> <button onclick="admin.executeClone()" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-black shadow hover:bg-orange-700">نسخ الآن</button> <button onclick="document.getElementById('clone-quiz-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold">إلغاء</button> 
     </div> 
    </div> 
@@ -318,6 +327,9 @@
         firebase.initializeApp(firebaseConfig);
         const dbRef = firebase.database().ref('edu_platform_data');
         let db = { quizzes: [], files: [], simulations: [], settings: {}, users: [], majors: [], majorConfigs: {} };
+
+        // Standard Universal Categories
+        const standardMinors = ['تخصص', 'تربوي', 'جدارات', 'IQ', 'عربي للجميع', 'انجليزي للجميع', 'حاسب آلي', 'معلومات عامة'];
 
         const app = {
             login: () => {
@@ -364,6 +376,7 @@
 
                             admin.loadSettings();
                             admin.renderMajors(); 
+                            admin.populateExistingBranchesCheckbox(); // New Feature
                             admin.updateDropdowns(); 
                             admin.renderTree();
                             admin.renderUsers();
@@ -404,7 +417,18 @@
                 db.settings = s; admin.save(); app.notify("تم الحفظ بنجاح");
             },
             
-            // --- Sections / Majors Logic (Updated for Types) ---
+            // --- Sections / Majors Logic (Updated with Import) ---
+            populateExistingBranchesCheckbox: () => {
+                const list = document.getElementById('existing-branches-list');
+                // Exclude 'تخصص' because it depends on the major name
+                const universalBranches = standardMinors.filter(b => b !== 'تخصص');
+                list.innerHTML = universalBranches.map(b => `
+                    <label class="flex items-center gap-1 bg-white px-2 py-1 rounded border shadow-sm cursor-pointer hover:bg-blue-50">
+                        <input type="checkbox" value="${b}" class="branch-import-check custom-checkbox">
+                        <span class="text-xs font-bold">${b}</span>
+                    </label>
+                `).join('');
+            },
             addMajor: () => {
                 const m = document.getElementById('new-major-name').value.trim();
                 if(!m) return app.notify("يرجى كتابة اسم القسم", "error");
@@ -413,28 +437,52 @@
                 if(db.majors.includes(m)) return app.notify("هذا القسم موجود بالفعل", "error");
                 
                 const type = document.querySelector('input[name="majorType"]:checked').value;
-                
-                // Save Major Name
                 db.majors.push(m);
                 
-                // Save Configuration if Custom
                 if(!db.majorConfigs) db.majorConfigs = {};
                 
                 if(type === 'custom') {
+                    // 1. Handle New Branches
                     const branchesInput = document.getElementById('new-major-branches').value.trim();
-                    const branches = branchesInput ? branchesInput.split(',').map(s => s.trim()).filter(s => s) : [];
+                    let branches = branchesInput ? branchesInput.split(',').map(s => s.trim()).filter(s => s) : [];
+                    
+                    // 2. Handle Imported Branches (The Magic Logic)
+                    const checkboxes = document.querySelectorAll('.branch-import-check:checked');
+                    checkboxes.forEach(cb => {
+                        const branchName = cb.value;
+                        if (!branches.includes(branchName)) branches.push(branchName);
+                        
+                        // CLONE LOGIC: Find quizzes in 'Universal' with this minor and copy them
+                        // Filtering: minor must match, and major must be 'Universal' OR undefined (legacy)
+                        const quizzesToCopy = (db.quizzes || []).filter(q => 
+                            q.minor === branchName && (q.major === 'Universal' || !q.major || q.major === 'GeneralFiles')
+                        );
+
+                        if(quizzesToCopy.length > 0) {
+                            quizzesToCopy.forEach(q => {
+                                const newQ = JSON.parse(JSON.stringify(q));
+                                newQ.id = Date.now() + Math.random(); // Ensure unique ID
+                                newQ.major = m; // Assign to NEW Custom Major (Strict Isolation)
+                                newQ.minor = branchName;
+                                db.quizzes.push(newQ);
+                            });
+                        }
+                    });
+
                     db.majorConfigs[m] = { type: 'custom', branches: branches };
+                    app.notify(`تم إنشاء قسم "${m}" ونسخ ${checkboxes.length > 0 ? 'المحتوى المحدد' : 'لا شيء'} بنجاح`);
                 } else {
                      db.majorConfigs[m] = { type: 'standard' };
+                     app.notify(`تم إضافة قسم "${m}" (قياسي)`);
                 }
 
                 admin.save();
                 document.getElementById('new-major-name').value = '';
                 document.getElementById('new-major-branches').value = '';
-                app.notify(`تم إضافة قسم "${m}" بنجاح ✅`);
+                document.querySelectorAll('.branch-import-check').forEach(cb => cb.checked = false);
             },
             deleteMajor: (m) => {
-                if(confirm(`هل أنت متأكد من حذف قسم "${m}"؟\nلن يتم حذف الاختبارات بداخله لكن لن تظهر في قوائم الاختيار.`)) {
+                if(confirm(`تحذير: هل أنت متأكد من حذف قسم "${m}"؟\nسيتم حذف التكوين، لكن الاختبارات قد تبقى يتيمة إذا لم تحذف يدوياً.`)) {
                     db.majors = db.majors.filter(x => x !== m);
                     if(db.majorConfigs && db.majorConfigs[m]) delete db.majorConfigs[m];
                     admin.save();
@@ -461,31 +509,26 @@
                 const majors = db.majors || [];
                 const opts = majors.map(m => `<option value="${m}">${m}</option>`).join('');
                 const optsWithComp = `<option value="GeneralFiles">مكتبة الملفات (عام)</option>` + opts;
+                const optsWithUniv = `<option value="Universal">-- عام / قياسي --</option>` + opts; // For Adding Quizzes
                 
                 // Update specific dropdowns
-                ['adm-major', 'file-major', 'clone-target-major'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if(el) {
-                        const currentVal = el.value;
-                        el.innerHTML = optsWithComp;
-                        if(currentVal) el.value = currentVal; 
-                    }
-                });
+                if(document.getElementById('file-major')) document.getElementById('file-major').innerHTML = optsWithComp;
+                if(document.getElementById('clone-target-major')) document.getElementById('clone-target-major').innerHTML = opts;
+                
+                // For "Add Quiz", we want to allow selecting 'Universal' explicitly or a specific Major
+                if(document.getElementById('adm-major')) document.getElementById('adm-major').innerHTML = `<option value="Universal">عام / قياسي (يظهر للكل)</option>` + opts;
                 
                 const simMajorSelect = document.getElementById('new-sim-major');
                 if(simMajorSelect) simMajorSelect.innerHTML = opts; 
 
-                // Update Quiz Target for Adding Questions
                 const targetQuizSelect = document.getElementById('adm-target-quiz');
                 if(targetQuizSelect) targetQuizSelect.innerHTML = (db.quizzes||[]).map(q=>`<option value="${q.id}">[${q.major}] ${q.name}</option>`).join('');
 
-                // Trigger minor update for the current selection
                 admin.updateMinorDropdown({target: document.getElementById('adm-major')});
             },
             updateMinorDropdown: (e) => {
                 if(!e || !e.target) return;
                 const majorName = e.target.value;
-                // Determine target minor select ID based on trigger
                 let targetId = 'adm-minor';
                 if(e.target.id === 'file-major') targetId = 'file-minor';
                 if(e.target.id === 'clone-target-major') targetId = 'clone-target-minor';
@@ -493,18 +536,8 @@
                 const minorSelect = document.getElementById(targetId);
                 if(!minorSelect) return;
 
-                if (majorName === 'GeneralFiles') {
-                    // تصنيفات الملفات العامة
-                    minorSelect.innerHTML = `
-                        <option value="تخصص">ملفات التخصص</option>
-                        <option value="تربوي">تربوي</option>
-                        <option value="جدارات">جدارات</option>
-                        <option value="IQ">IQ</option>
-                        <option value="عربي للجميع">عربي للجميع</option>
-                        <option value="انجليزي للجميع">انجليزي للجميع</option>
-                        <option value="حاسب آلي">حاسب آلي</option>
-                        <option value="معلومات عامة">معلومات عامة</option>
-                    `;
+                if (majorName === 'GeneralFiles' || majorName === 'Universal') {
+                    minorSelect.innerHTML = standardMinors.map(m => `<option value="${m}">${m}</option>`).join('');
                     return;
                 }
 
@@ -514,26 +547,15 @@
                     const branches = config.branches || ['عام'];
                     minorSelect.innerHTML = branches.map(b => `<option value="${b}">${b}</option>`).join('');
                 } else {
-                    // Standard Options
-                    minorSelect.innerHTML = `
-                        <option value="تخصص">أسئلة التخصص</option>
-                        <option value="تربوي">تربوي</option>
-                        <option value="جدارات">جدارات</option>
-                        <option value="IQ">IQ</option>
-                        <option value="عربي للجميع">عربي للجميع</option>
-                        <option value="انجليزي للجميع">انجليزي للجميع</option>
-                        <option value="حاسب آلي">حاسب آلي</option>
-                        <option value="معلومات عامة">معلومات عامة</option>
-                    `;
+                     minorSelect.innerHTML = standardMinors.map(m => `<option value="${m === 'تخصص' ? 'تخصص' : m}">${m === 'تخصص' ? 'أسئلة التخصص' : m}</option>`).join('');
                 }
             },
 
-            // --- Cloning Logic ---
+            // --- Cloning Logic (Fixed Isolation) ---
             openCloneModal: (qid) => {
                 admin.updateDropdowns();
                 document.getElementById('clone-src-qid').value = qid;
                 document.getElementById('clone-quiz-modal').classList.remove('hidden');
-                // Trigger update for clone minor
                 admin.updateMinorDropdown({target: document.getElementById('clone-target-major')});
             },
             executeClone: () => {
@@ -547,13 +569,14 @@
                 const newQuiz = JSON.parse(JSON.stringify(srcQuiz));
                 newQuiz.id = Date.now();
                 newQuiz.name = newQuiz.name + " (نسخة)";
-                newQuiz.major = targetMajor; // Assign new major
-                newQuiz.minor = targetMinor; // Assign new minor
+                // STRICTLY ASSIGN NEW MAJOR AND MINOR
+                newQuiz.major = targetMajor; 
+                newQuiz.minor = targetMinor; 
                 
                 db.quizzes.push(newQuiz);
                 admin.save();
                 document.getElementById('clone-quiz-modal').classList.add('hidden');
-                app.notify("تم نسخ الاختبار بنجاح ✅");
+                app.notify("تم نسخ الاختبار بنجاح في القسم الجديد فقط ✅");
             },
 
             // --- USER MANAGEMENT ---
@@ -627,6 +650,7 @@
                 const n = document.getElementById('new-quiz-name').value;
                 if(!n) return app.notify("الاسم مطلوب", "error");
                 if(!db.quizzes) db.quizzes = [];
+                // If "Universal" is selected, we save it as 'Universal' to separate it from Custom Majors
                 db.quizzes.push({ id: Date.now(), name: n, mode: document.getElementById('adm-mode').value, major: document.getElementById('adm-major').value, minor: document.getElementById('adm-minor').value, questions: [] });
                 admin.save(); app.notify("تم إضافة الاختبار");
             },
@@ -662,6 +686,22 @@
                 db.simulations.push({ id: Date.now(), name: name, mode: document.getElementById('new-sim-mode').value, targetMajor: document.getElementById('new-sim-major').value, time: parseInt(document.getElementById('ns-time').value) || 60, counts: { spec: parseInt(document.getElementById('ns-spec').value)||0, ped: parseInt(document.getElementById('ns-ped').value)||0, comp: parseInt(document.getElementById('ns-comp').value)||0, iq: parseInt(document.getElementById('ns-iq').value)||0, ar: parseInt(document.getElementById('ns-ar').value)||0, en: parseInt(document.getElementById('ns-en').value)||0, cs: parseInt(document.getElementById('ns-cs').value)||0, gen: parseInt(document.getElementById('ns-gen').value)||0 } });
                 admin.save(); app.notify("تم إنشاء المحاكي بنجاح");
             },
+            // --- TREE RENDERING & BULK DELETE ---
+            toggleBulkSelect: (id) => {
+                const btn = document.getElementById('bulk-delete-btn');
+                const anyChecked = document.querySelectorAll('.q-select:checked').length > 0;
+                if(anyChecked) btn.classList.remove('hidden'); else btn.classList.add('hidden');
+            },
+            bulkDeleteQuizzes: () => {
+                const checked = document.querySelectorAll('.q-select:checked');
+                if(!checked.length) return;
+                if(confirm(`هل أنت متأكد من حذف ${checked.length} اختبار؟`)) {
+                    const idsToDelete = Array.from(checked).map(c => c.value);
+                    db.quizzes = db.quizzes.filter(q => !idsToDelete.includes(q.id.toString()));
+                    admin.save();
+                    document.getElementById('bulk-delete-btn').classList.add('hidden');
+                }
+            },
             renderTree: () => {
                 const t = document.getElementById('admin-tree'); 
                 const openIds = new Set();
@@ -679,29 +719,26 @@
                     fullHtml += `</div></details>`;
                 }
                 
-                // Quizzes
+                // Quizzes with strict filtering for admin view
                 const quizzes = db.quizzes || [];
                 if (quizzes.length) {
                     fullHtml += `<h4 class="font-black text-xl text-slate-800 mb-4 mt-6 border-b pb-2 flex items-center gap-2"><i class="fas fa-book text-blue-600"></i> الاختبارات</h4>`;
                     
-                    let categories = [
-                        { id: 'cat-ped', name: 'التربوي', filter: q => q.minor === 'تربوي' },
-                        { id: 'cat-comp', name: 'الجدارات', filter: q => q.minor === 'جدارات' },
-                        { id: 'cat-iq', name: 'IQ والذكاء', filter: q => q.minor === 'IQ' },
-                        { id: 'cat-ar-gen', name: 'عربي للجميع', filter: q => q.minor === 'عربي للجميع' },
-                        { id: 'cat-en-gen', name: 'انجليزي للجميع', filter: q => q.minor === 'انجليزي للجميع' },
-                        { id: 'cat-cs', name: 'حاسب آلي', filter: q => q.minor === 'حاسب آلي' },
-                        { id: 'cat-info', name: 'معلومات عامة', filter: q => q.minor === 'معلومات عامة' },
-                        { id: 'major-comp', name: 'ملفات (عام)', filter: q => q.major === 'GeneralFiles' }
-                    ];
-
-                    // Add Dynamic Majors (Standard and Custom)
+                    let categories = [];
+                    // Add Standard Universal Categories (where major is 'Universal' or undefined)
+                    standardMinors.forEach(sm => {
+                         categories.push({ id: `univ-${sm}`, name: `${sm} (عام/قياسي)`, filter: q => (q.major === 'Universal' || !q.major) && q.minor === sm });
+                    });
+                    
+                    // Add Custom Major Categories
                     (db.majors || []).forEach(m => {
-                        if(m !== 'GeneralFiles' && m !== 'Competition') {
+                        if(m !== 'Universal' && m !== 'GeneralFiles') {
                             const config = db.majorConfigs && db.majorConfigs[m] ? db.majorConfigs[m] : {type: 'standard'};
                             if (config.type === 'custom') {
-                                categories.push({ id: `major-${m}`, name: `${m} (مخصص)`, filter: q => q.major === m });
+                                // Group custom major quizzes
+                                categories.push({ id: `major-${m}`, name: `[مخصص] ${m}`, filter: q => q.major === m });
                             } else {
+                                // Standard major specific (usually just 'تخصص')
                                 categories.push({ id: `major-${m}`, name: `${m} (تخصص)`, filter: q => q.major === m && q.minor === 'تخصص' });
                             }
                         }
@@ -718,7 +755,7 @@
                                     questionsHtml += ` <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100 shadow-sm mt-1"> <span class="text-xs font-bold text-slate-600 truncate w-3/4">${i+1}. ${sq.text}</span> <div class="flex gap-1"> <button onclick="admin.editQ(${q.id}, ${i})" class="text-xs text-emerald-500 p-1 hover:bg-emerald-50 rounded"><i class="fas fa-edit"></i></button> <button onclick="admin.delQ(${q.id}, ${i})" class="text-xs text-red-500 p-1 hover:bg-red-50 rounded"><i class="fas fa-trash"></i></button> </div> </div>`;
                                 });
                                 const qDetailsId = `q-det-${q.id}`; const isQOpen = openIds.has(qDetailsId);
-                                fullHtml += ` <div class="bg-white p-3 rounded-lg border shadow-sm"> <div class="flex flex-col md:flex-row justify-between items-center gap-2"> <div class="flex items-center gap-2"> <span class="text-[10px] font-bold ${locked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} px-2 py-1 rounded-lg">${locked?'مغلق':'مفتوح'}</span> <h5 class="font-bold text-slate-800">${q.name}</h5> <span class="text-[10px] text-slate-400">(${q.minor})</span> <button onclick="admin.openRenameModal(${q.id})" class="text-slate-400 hover:text-blue-600 transition-colors" title="تعديل الاسم"><i class="fas fa-pen text-xs"></i></button> </div> <div class="flex gap-2"> <button onclick="admin.toggleQs('${qDetailsId}')" class="text-xs bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-bold border border-blue-100 hover:bg-blue-100">الأسئلة (${q.questions?.length||0})</button> <button onclick="admin.openCloneModal(${q.id})" class="text-xs bg-orange-50 text-orange-600 px-3 py-2 rounded-lg font-bold border border-orange-100 hover:bg-orange-100" title="نسخ الاختبار لقسم آخر"><i class="fas fa-copy"></i> نسخ</button> <button onclick="admin.toggleLock('quiz', ${q.id})" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold hover:bg-slate-200">${locked?'🔓 فتح':'🔒 قفل'}</button> <button onclick="admin.delItem('quiz', ${q.id})" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg font-bold hover:bg-red-100">حذف</button> </div> </div> <div id="${qDetailsId}" class="${isQOpen ? '' : 'hidden'} mt-4 pt-4 border-t space-y-2 bg-slate-50 p-2 rounded-lg" data-is-open="${isQOpen}"> ${questionsHtml} </div> </div>`;
+                                fullHtml += ` <div class="bg-white p-3 rounded-lg border shadow-sm relative"> <div class="absolute top-3 left-3 flex gap-2"> <input type="checkbox" class="q-select w-5 h-5 accent-red-500 cursor-pointer" value="${q.id}" onchange="admin.toggleBulkSelect()"> </div> <div class="flex flex-col md:flex-row justify-between items-center gap-2 pl-8"> <div class="flex items-center gap-2"> <span class="text-[10px] font-bold ${locked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} px-2 py-1 rounded-lg">${locked?'مغلق':'مفتوح'}</span> <h5 class="font-bold text-slate-800">${q.name}</h5> <span class="text-[10px] text-slate-400">(${q.minor})</span> <button onclick="admin.openRenameModal(${q.id})" class="text-slate-400 hover:text-blue-600 transition-colors" title="تعديل الاسم"><i class="fas fa-pen text-xs"></i></button> </div> <div class="flex gap-2"> <button onclick="admin.toggleQs('${qDetailsId}')" class="text-xs bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-bold border border-blue-100 hover:bg-blue-100">الأسئلة (${q.questions?.length||0})</button> <button onclick="admin.openCloneModal(${q.id})" class="text-xs bg-orange-50 text-orange-600 px-3 py-2 rounded-lg font-bold border border-orange-100 hover:bg-orange-100" title="نسخ الاختبار لقسم آخر"><i class="fas fa-copy"></i> نسخ</button> <button onclick="admin.toggleLock('quiz', ${q.id})" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold hover:bg-slate-200">${locked?'🔓 فتح':'🔒 قفل'}</button> <button onclick="admin.delItem('quiz', ${q.id})" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg font-bold hover:bg-red-100">حذف</button> </div> </div> <div id="${qDetailsId}" class="${isQOpen ? '' : 'hidden'} mt-4 pt-4 border-t space-y-2 bg-slate-50 p-2 rounded-lg" data-is-open="${isQOpen}"> ${questionsHtml} </div> </div>`;
                             });
                             fullHtml += `</div></details>`;
                         }
